@@ -1,0 +1,3 @@
+#MEALWALLET_V1|notifications
+NTF-0001|USR-0003|Welcome to Meal Wallet|Your Standard Veg Plan is active. Approved missed meals credit 80% to your wallet.|0|1794585977
+NTF-0002|USR-0005|Plan Validity Ending Soon|Your Executive Premium Plan ends tomorrow. Your current choice is REFUND (Rs. 192.00).|0|1794585977

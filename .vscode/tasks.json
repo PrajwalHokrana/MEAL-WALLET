@@ -1,0 +1,78 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. Build Meal Wallet (Windows g++)",
+      "type": "shell",
+      "command": "g++",
+      "args": [
+        "-std=c++17",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Iinclude",
+        "-Ithird_party",
+        "src/main.cpp",
+        "src/DomainImpl.cpp",
+        "src/ConsoleAndTests.cpp",
+        "src/repository/MealWalletService.cpp",
+        "src/api/ApiServer.cpp",
+        "-o",
+        "mealwallet.exe",
+        "-lws2_32"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$gcc"],
+      "detail": "Compiles all 5 C++17 source files into mealwallet.exe on Windows using MinGW/MSYS2 g++"
+    },
+    {
+      "label": "2. Build & Start Web Server (Open http://localhost:8080)",
+      "type": "shell",
+      "command": ".\\run_windows.bat",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Builds mealwallet.exe, opens http://localhost:8080 in your browser, and starts the live C++ server"
+    },
+    {
+      "label": "3. Run Automated Unit & Edge-Case Tests (--test)",
+      "type": "shell",
+      "dependsOn": ["1. Build Meal Wallet (Windows g++)"],
+      "command": ".\\mealwallet.exe",
+      "args": ["--test"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "4. Run Pure Console Fallback Demo (--console)",
+      "type": "shell",
+      "dependsOn": ["1. Build Meal Wallet (Windows g++)"],
+      "command": ".\\mealwallet.exe",
+      "args": ["--console"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "5. Reset & Seed Demo Data (--seed-demo)",
+      "type": "shell",
+      "dependsOn": ["1. Build Meal Wallet (Windows g++)"],
+      "command": ".\\mealwallet.exe",
+      "args": ["--seed-demo"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

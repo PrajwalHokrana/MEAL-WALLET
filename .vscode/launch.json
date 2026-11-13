@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Meal Wallet Web Server (F5)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/mealwallet.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb.exe",
+      "preLaunchTask": "1. Build Meal Wallet (Windows g++)"
+    },
+    {
+      "name": "Run Automated Tests (--test)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/mealwallet.exe",
+      "args": ["--test"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb.exe",
+      "preLaunchTask": "1. Build Meal Wallet (Windows g++)"
+    }
+  ]
+}

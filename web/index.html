@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meal Wallet — Hostel Mess Refund System</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="demoBanner" class="demo-banner">
+    <span>&#9200; DEMO CLOCK ACTIVE: <strong id="demoBannerTime"></strong> — All meal cutoffs and settlements follow simulated time.</span>
+  </div>
+
+  <header class="topbar">
+    <a href="/" class="brand">
+      <span class="brand-badge">MW</span>
+      <span>Meal Wallet</span>
+      <span class="brand-sub">C++17 OOP Edition</span>
+    </a>
+    <div class="topbar-right">
+      <span id="clockChip" class="poll-indicator">
+        <span class="poll-dot"></span>
+        <span>Connecting to C++ server...</span>
+      </span>
+      <button type="button" class="btn btn-outline btn-sm" id="themeToggleBtn">Dark / Light</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="login-shell">
+      <!-- Left Hero Showcase Panel -->
+      <section class="login-hero-panel">
+        <div>
+          <span class="wallet-label-pill">Hostel Mess Missed-Meal Refund Flow</span>
+          <h1 style="font-size: 2rem; font-weight: 800; line-height: 1.2; margin-top: 8px;">
+            Skip before cutoff.<br/>Get credited fairly.
+          </h1>
+          <p style="font-size: 0.94rem; opacity: 0.9; margin-top: 10px;">
+            Built in pure C++17 with integer-paise accounting, an append-only ledger, and live headcount forecasting so the hostel kitchen cooks only what is needed.
+          </p>
+
+          <div class="feature-pill-list">
+            <div class="feature-pill-item">
+              <strong>1. Transparent 6-Hour Cutoff</strong><br/>
+              <span style="opacity: 0.88;">Live countdown on every meal card. Skip a single meal or a multi-day leave range.</span>
+            </div>
+            <div class="feature-pill-item">
+              <strong>2. Smart Admin Verdict &amp; Counter Verification</strong><br/>
+              <span style="opacity: 0.88;">Cross-checks cutoff time and counter attendance logs to flag suspicious requests automatically.</span>
+            </div>
+            <div class="feature-pill-item">
+              <strong>3. Append-Only Wallet &amp; Month-End Choice</strong><br/>
+              <span style="opacity: 0.88;">Choose between an offline cash/UPI <strong>REFUND</strong> payout or <strong>CARRY FORWARD</strong> discount on next month's bill.</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size: 0.8rem; opacity: 0.85; border-top: 1px solid rgba(255,255,255,0.18); padding-top: 14px;">
+          3rd-Semester CS Object-Oriented Programming Course Project &bull; Standard C++17 + Vanilla Fetch UI
+        </div>
+      </section>
+
+      <!-- Right Sign-In & Demo Quick-Fill Card -->
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <section class="card" style="margin-bottom: 0;">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" style="font-size: 1.35rem;">Sign In to Your Account</h2>
+              <p class="card-subtitle">Enter your hostel roll username or select a demo account below</p>
+            </div>
+          </div>
+
+          <div id="loginError" class="alert alert-error" role="alert"></div>
+          <div id="loginSuccess" class="alert alert-success" role="status"></div>
+
+          <form id="loginForm">
+            <label for="username">Username / Roll ID</label>
+            <input type="text" id="username" name="username" placeholder="e.g. aarav or admin" required autocomplete="username" />
+
+            <label for="password">Password</label>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 14px;">
+              <input type="password" id="password" name="password" placeholder="Enter password" required autocomplete="current-password" style="margin: 0;" />
+              <button type="button" class="btn btn-outline btn-sm" id="togglePwdBtn" style="white-space: nowrap; height: 41px; padding: 0 14px;">Show</button>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 13px; font-size: 0.98rem;" id="loginSubmitBtn">
+              Sign In to Meal Wallet &rarr;
+            </button>
+          </form>
+
+          <!-- Forced Password Change Panel on First Login -->
+          <div id="changePasswordPanel" style="display: none; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+            <h3 class="card-title" style="color: var(--accent-amber); margin-bottom: 6px;">First Login: Set Your Personal Password</h3>
+            <p class="card-subtitle" style="margin-bottom: 12px;">
+              Newly created student accounts must replace their temporary password before entering the dashboard.
+            </p>
+            <form id="changePwdForm">
+              <label for="newPassword">New Password (minimum 6 characters)</label>
+              <input type="password" id="newPassword" required minlength="6" placeholder="Enter your new password" />
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Save New Password &amp; Continue</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="card" style="margin-bottom: 0;">
+          <div class="card-header" style="margin-bottom: 10px;">
+            <div>
+              <h3 class="card-title" style="font-size: 1rem;">One-Tap Viva Demo Accounts</h3>
+              <p class="card-subtitle">Click any card to auto-fill credentials</p>
+            </div>
+            <span class="badge badge-info">Seeded</span>
+          </div>
+          <div class="cred-grid">
+            <button type="button" class="cred-card-btn quick-cred" data-u="admin" data-p="admin123">
+              <span class="badge badge-amber">ADMIN WARDEN</span>
+              <strong style="font-size: 0.88rem; margin-top: 3px;">admin / admin123</strong>
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Full Admin &amp; Demo Clock</small>
+            </button>
+            <button type="button" class="cred-card-btn quick-cred" data-u="aarav" data-p="student123">
+              <span class="badge badge-approved">STUDENT &bull; VEG</span>
+              <strong style="font-size: 0.88rem; margin-top: 3px;">aarav / student123</strong>
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Balance: Rs. 88.00</small>
+            </button>
+            <button type="button" class="cred-card-btn quick-cred" data-u="priya" data-p="student123">
+              <span class="badge badge-info">STUDENT &bull; NON-VEG</span>
+              <strong style="font-size: 0.88rem; margin-top: 3px;">priya / student123</strong>
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Choice: REFUND</small>
+            </button>
+            <button type="button" class="cred-card-btn quick-cred" data-u="rohan" data-p="student123">
+              <span class="badge badge-amber">NEAR MONTH-END</span>
+              <strong style="font-size: 0.88rem; margin-top: 3px;">rohan / student123</strong>
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Premium &bull; Rs. 192.00</small>
+            </button>
+            <button type="button" class="cred-card-btn quick-cred" data-u="sneha" data-p="student123">
+              <span class="badge badge-rejected">COUNTER FRAUD CASE</span>
+              <strong style="font-size: 0.88rem; margin-top: 3px;">sneha / student123</strong>
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Seen Eating at Counter</small>
+            </button>
+            <button type="button" class="cred-card-btn quick-cred" data-u="vikram" data-p="firstlogin">
+              <span class="badge badge-info">FIRST LOGIN</span>
+              <strong style="font-size: 0.88rem; margin-top: 3px;">vikram / firstlogin</strong>
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Forces Password Change</small>
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const savedTheme = localStorage.getItem('mw_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('themeToggleBtn').addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('mw_theme', next);
+    });
+
+    const pwdInput = document.getElementById('password');
+    const togglePwdBtn = document.getElementById('togglePwdBtn');
+    togglePwdBtn.addEventListener('click', () => {
+      const isPwd = pwdInput.type === 'password';
+      pwdInput.type = isPwd ? 'text' : 'password';
+      togglePwdBtn.textContent = isPwd ? 'Hide' : 'Show';
+    });
+
+    document.querySelectorAll('.quick-cred').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('username').value = btn.dataset.u;
+        document.getElementById('password').value = btn.dataset.p;
+      });
+    });
+
+    let pendingLoginState = null;
+
+    function showAlert(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.classList.add('show');
+    }
+    function clearAlerts() {
+      document.getElementById('loginError').classList.remove('show');
+      document.getElementById('loginSuccess').classList.remove('show');
+    }
+
+    async function refreshClockChip() {
+      try {
+        const r = await fetch('/healthz');
+        const data = await r.json();
+        if (data.clock) {
+          document.getElementById('clockChip').innerHTML =
+            `<span class="poll-dot"></span><span>${data.clock.nowIstPretty} (${data.clock.modeName})</span>`;
+          const banner = document.getElementById('demoBanner');
+          if (data.clock.demoMode) {
+            banner.classList.add('active');
+            document.getElementById('demoBannerTime').textContent = data.clock.nowIstPretty;
+          } else {
+            banner.classList.remove('active');
+          }
+        }
+      } catch (_) {}
+    }
+    refreshClockChip();
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearAlerts();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          showAlert('loginError', (data.error || 'Login failed') + (data.rule ? ' [' + data.rule + ']' : ''));
+          return;
+        }
+        localStorage.setItem('mw_token', data.token);
+        localStorage.setItem('mw_role', data.role);
+        localStorage.setItem('mw_username', data.username);
+
+        if (data.mustChangePassword) {
+          pendingLoginState = { oldPassword: password, route: data.dashboardRoute, token: data.token };
+          document.getElementById('changePasswordPanel').style.display = 'block';
+          showAlert('loginSuccess', 'Signed in with temporary credentials. Please set your personal password below.');
+          return;
+        }
+        window.location.href = data.dashboardRoute || (data.role === 'STUDENT' ? '/student' : '/admin');
+      } catch (err) {
+        showAlert('loginError', 'Could not reach the C++ server. Please make sure mealwallet.exe is running.');
+      }
+    });
+
+    document.getElementById('changePwdForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearAlerts();
+      if (!pendingLoginState) return;
+      const newPassword = document.getElementById('newPassword').value;
+      try {
+        const res = await fetch('/api/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Session-Token': pendingLoginState.token
+          },
+          body: JSON.stringify({
+            oldPassword: pendingLoginState.oldPassword,
+            newPassword
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          showAlert('loginError', data.error || 'Could not update password');
+          return;
+        }
+        window.location.href = pendingLoginState.route || '/student';
+      } catch (err) {
+        showAlert('loginError', 'Network error while updating password.');
+      }
+    });
+  </script>
+</body>
+</html>

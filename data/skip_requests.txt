@@ -1,0 +1,10 @@
+#MEALWALLET_V1|skip_requests
+REQ-0001|USR-0003|2026-11-10|LUNCH|APPROVED|Department lab workshop|1794297977|0||Approved: submitted before 6h cutoff & not in counter log|1794326777|
+REQ-0002|USR-0003|2026-11-11|DINNER|APPROVED|Family dinner in city|1794333977|0||Approved: submitted before 6h cutoff & not in counter log|1794362777|
+REQ-0003|USR-0004|2026-11-11|LUNCH|APPROVED|Hackathon qualifier|1794305177|0||Approved: submitted before 6h cutoff & not in counter log|1794333977|
+REQ-0004|USR-0004|2026-11-12|DINNER|APPROVED|Traveling home|1794384377|0||Approved: submitted before 6h cutoff & not in counter log|1794413177|
+REQ-0005|USR-0005|2026-11-09|BREAKFAST|APPROVED|Early morning clinic visit|1794257977|0||Approved: submitted before 6h cutoff & not in counter log|1794286777|
+REQ-0006|USR-0005|2026-11-10|LUNCH|APPROVED|Internship interview|1794297977|0||Approved: submitted before 6h cutoff & not in counter log|1794326777|
+REQ-0007|USR-0005|2026-11-12|DINNER|APPROVED|Sports tournament|1794387977|0||Approved: submitted before 6h cutoff & not in counter log|1794416777|
+REQ-0008|USR-0003|2026-11-14|DINNER|PENDING|Going to railway station|1794584177|0|||0|
+REQ-0009|USR-0006|2026-11-13|BREAKFAST|PENDING|Skipped breakfast due to headache|1794511800|0|||0|

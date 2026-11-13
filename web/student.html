@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meal Wallet — Student Dashboard</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="demoBanner" class="demo-banner">
+    DEMO CLOCK ACTIVE: <span id="demoBannerTime"></span> — Meal cutoffs and validity use simulated DemoClock.
+  </div>
+
+  <header class="topbar">
+    <a href="/student" class="brand">
+      <span class="brand-badge">MW</span>
+      <span>Meal Wallet <small style="font-weight: 500; color: var(--text-muted);">Student Portal</small></span>
+    </a>
+    <div class="topbar-right">
+      <span class="poll-indicator">
+        <span class="poll-dot"></span>
+        <span id="pollStatusText">Updated just now</span>
+      </span>
+      <span id="studentTopName" style="font-weight: 600; font-size: 0.9rem;"></span>
+      <button type="button" class="btn btn-outline btn-sm" id="themeToggleBtn">Theme</button>
+      <button type="button" class="btn btn-outline btn-sm" id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="studentAlertError" class="alert alert-error" role="alert"></div>
+    <div id="studentAlertSuccess" class="alert alert-success" role="status"></div>
+
+    <!-- Wallet Hero Card -->
+    <section class="wallet-hero" id="walletHeroCard">
+      <div>
+        <div class="wallet-label-pill">&#128179; Virtual Meal Wallet (Append-Only Ledger)</div>
+        <div class="wallet-amount" id="walletBalanceDisplay">Rs. 0.00</div>
+        <div class="wallet-meta">
+          Total Credited: <strong id="totalCreditedDisplay">Rs. 0.00</strong> &bull;
+          Monthly Skips Used: <strong id="skipsUsedDisplay">0 / 10</strong>
+        </div>
+      </div>
+      <div class="wallet-plan-glass">
+        <div style="font-size: 0.8rem; opacity: 0.9;">ACTIVE MESS PLAN</div>
+        <div style="font-size: 1.15rem; font-weight: 700; margin: 2px 0;" id="planNameDisplay">-</div>
+        <div style="font-size: 0.83rem; opacity: 0.92;">
+          Validity: <span id="planValidityDisplay">-</span><br />
+          Month-End Choice: <strong id="settlementChoiceBadge">CARRY_FORWARD</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- Today's 3 Meals Cards with Live Cutoff Countdowns -->
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Today's Three Meals (<span id="todayDateLabel">-</span>)</h2>
+          <p class="card-subtitle">Skip before the 6-hour cutoff to receive an automatic refund credit upon Admin verification</p>
+        </div>
+        <span class="mono" style="font-size: 0.85rem; color: var(--text-muted);" id="liveServerClockLabel"></span>
+      </div>
+      <div class="grid-3" id="todayMealsGrid"></div>
+    </section>
+
+    <div class="grid-2">
+      <!-- Multi-Day Skip / Future Single Skip / Meal Swap Form -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Plan Ahead: Multi-Day Skip or Meal Swap</h2>
+        </div>
+        <form id="multiSkipForm">
+          <label for="skipModeSelect">Action Type</label>
+          <select id="skipModeSelect">
+            <option value="SINGLE">Single Future Meal Skip</option>
+            <option value="MULTI">Multi-Day Leave Range (Expands to Individual Slots)</option>
+            <option value="SWAP">One-Day Meal Upgrade Swap (Debits Price Difference)</option>
+          </select>
+
+          <div id="singleOrSwapFields">
+            <label for="singleDateInput">Meal Date</label>
+            <input type="date" id="singleDateInput" required />
+            <label for="singleMealSelect">Meal Slot</label>
+            <select id="singleMealSelect">
+              <option value="BREAKFAST">BREAKFAST (08:00 AM)</option>
+              <option value="LUNCH" selected>LUNCH (12:30 PM)</option>
+              <option value="DINNER">DINNER (08:00 PM)</option>
+            </select>
+          </div>
+
+          <div id="multiRangeFields" style="display: none;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <label for="rangeStartInput">Start Date</label>
+                <input type="date" id="rangeStartInput" />
+              </div>
+              <div>
+                <label for="rangeEndInput">End Date</label>
+                <input type="date" id="rangeEndInput" />
+              </div>
+            </div>
+            <label>Meals to Skip Each Day</label>
+            <div style="display: flex; gap: 14px; margin: 6px 0 12px;">
+              <label style="display: inline-flex; align-items: center; gap: 5px; font-weight: 500;">
+                <input type="checkbox" class="multi-meal-cb" value="BREAKFAST" checked style="width: auto; margin: 0;" /> Breakfast
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 5px; font-weight: 500;">
+                <input type="checkbox" class="multi-meal-cb" value="LUNCH" checked style="width: auto; margin: 0;" /> Lunch
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 5px; font-weight: 500;">
+                <input type="checkbox" class="multi-meal-cb" value="DINNER" checked style="width: auto; margin: 0;" /> Dinner
+              </label>
+            </div>
+          </div>
+
+          <div id="swapPlanField" style="display: none;">
+            <label for="swapTargetPlan">Upgrade Target Plan</label>
+            <select id="swapTargetPlan">
+              <option value="PLAN-NONVEG">Protein Non-Veg Plan (B: Rs.45, L: Rs.75, D: Rs.75)</option>
+              <option value="PLAN-PREMIUM">Executive Premium Plan (B: Rs.55, L: Rs.90, D: Rs.95)</option>
+            </select>
+          </div>
+
+          <label for="skipReasonInput">Reason</label>
+          <input type="text" id="skipReasonInput" placeholder="e.g. Going home for weekend / family visit" required />
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Request</button>
+        </form>
+      </section>
+
+      <!-- Month-End Settlement Choice & Next-Cycle Plan -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Month-End Settlement &amp; Next-Cycle Plan</h2>
+          <span class="badge badge-amber">Default: Carry Forward</span>
+        </div>
+        <p class="card-subtitle" style="margin-bottom: 12px;">
+          Choose how your accumulated Meal Wallet balance should be settled at the end of your current plan cycle:
+        </p>
+        <form id="settlementForm">
+          <label for="settlementChoiceSelect">Month-End Wallet Settlement Preference</label>
+          <select id="settlementChoiceSelect">
+            <option value="CARRY_FORWARD">CARRY FORWARD (Automatically reduces next month's mess bill)</option>
+            <option value="REFUND">REFUND (Creates an offline payout record for Admin to pay via UPI/Bank)</option>
+          </select>
+
+          <label for="nextCyclePlanSelect">Queue Plan Change for Next Cycle (Applies from Next Cycle Only)</label>
+          <select id="nextCyclePlanSelect">
+            <option value="">Keep current plan for next cycle</option>
+            <option value="PLAN-VEG">Standard Veg Plan (Rs. 145 / day)</option>
+            <option value="PLAN-NONVEG">Protein Non-Veg Plan (Rs. 195 / day)</option>
+            <option value="PLAN-PREMIUM">Executive Premium Plan (Rs. 240 / day)</option>
+          </select>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Save Settlement &amp; Plan Preferences</button>
+        </form>
+
+        <!-- Short Visible Rules Box -->
+        <div style="margin-top: 16px; padding: 12px; border-radius: 10px; background: var(--bg-subtle); font-size: 0.83rem;">
+          <strong>Active Mess Refund Rules (Live from Config):</strong>
+          <ul style="margin-left: 18px; margin-top: 4px;" id="shortRulesList">
+            <li>Loading rules...</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+
+    <!-- Month Calendar & Skip Request History -->
+    <div class="grid-2">
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Monthly Meal Skip Calendar (<span id="calMonthTitle">-</span>)</h2>
+          <div style="display: flex; gap: 6px; font-size: 0.75rem;">
+            <span class="badge badge-approved">Approved</span>
+            <span class="badge badge-pending">Pending</span>
+            <span class="badge badge-rejected">Rejected</span>
+          </div>
+        </div>
+        <div class="calendar-grid" id="monthCalendarGrid"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Notifications Inbox</h2>
+          <span class="badge badge-info" id="inboxCountBadge">0</span>
+        </div>
+        <div id="inboxListContainer" style="max-height: 310px; overflow-y: auto;"></div>
+      </section>
+    </div>
+
+    <!-- Skip Requests Table (with Cancel & One-Time Appeal buttons) -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">My Skip Requests &amp; One-Time Appeals</h2>
+        <span class="card-subtitle">Rejected requests can be appealed once; pending requests can be cancelled before cutoff</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Req ID</th>
+              <th>Date &amp; Meal</th>
+              <th>Status</th>
+              <th>Est. Credit</th>
+              <th>Reason / Admin Note</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="studentRequestsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Append-Only Wallet Ledger Table -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">Append-Only Wallet Ledger Statement</h2>
+        <span class="badge badge-success">Derived Balance Integrity</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Txn ID</th>
+              <th>Time (IST)</th>
+              <th>Type</th>
+              <th>Signed Amount</th>
+              <th>Description</th>
+              <th>Ref ID</th>
+            </tr>
+          </thead>
+          <tbody id="walletLedgerTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const token = localStorage.getItem('mw_token') || '';
+    if (!token) window.location.href = '/';
+
+    const savedTheme = localStorage.getItem('mw_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('themeToggleBtn').addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('mw_theme', next);
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/api/logout', { method: 'POST', headers: { 'X-Session-Token': token } });
+      localStorage.removeItem('mw_token');
+      window.location.href = '/';
+    });
+
+    function showBanner(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 7000);
+    }
+
+    const skipModeSelect = document.getElementById('skipModeSelect');
+    skipModeSelect.addEventListener('change', () => {
+      const mode = skipModeSelect.value;
+      document.getElementById('singleOrSwapFields').style.display = (mode === 'MULTI') ? 'none' : 'block';
+      document.getElementById('multiRangeFields').style.display   = (mode === 'MULTI') ? 'block' : 'none';
+      document.getElementById('swapPlanField').style.display      = (mode === 'SWAP')  ? 'block' : 'none';
+    });
+
+    function formatDuration(sec) {
+      if (sec <= 0) return 'Cutoff Passed';
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = Math.floor(sec % 60);
+      return `${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s left`;
+    }
+
+    let lastBalancePaise = null;
+    let lastNotifCount = null;
+    let initializedDates = false;
+
+    async function quickSkipTodayMeal(mealDate, mealType) {
+      try {
+        const res = await fetch('/api/student/skips', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
+          body: JSON.stringify({
+            mode: 'SINGLE',
+            mealDate,
+            mealType,
+            reason: "Won't be eating " + mealType.toLowerCase() + " today"
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          showBanner('studentAlertError', data.error + (data.rule ? ` [${data.rule}]` : ''));
+          return;
+        }
+        showBanner('studentAlertSuccess', data.message);
+        await pollStudentData();
+      } catch (e) {
+        showBanner('studentAlertError', 'Network error while submitting skip.');
+      }
+    }
+
+    async function cancelRequest(reqId) {
+      try {
+        const res = await fetch('/api/student/skips/' + encodeURIComponent(reqId), {
+          method: 'DELETE',
+          headers: { 'X-Session-Token': token }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          showBanner('studentAlertError', data.error);
+          return;
+        }
+        showBanner('studentAlertSuccess', data.message);
+        await pollStudentData();
+      } catch (e) {
+        showBanner('studentAlertError', 'Failed to cancel request.');
+      }
+    }
+
+    async function appealRequest(reqId) {
+      const reason = prompt('Enter your one-time appeal explanation for the Admin:', 'I was not at the mess counter; please verify.');
+      if (!reason) return;
+      try {
+        const res = await fetch('/api/student/skips/' + encodeURIComponent(reqId) + '/appeal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
+          body: JSON.stringify({ appealReason: reason })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          showBanner('studentAlertError', data.error);
+          return;
+        }
+        showBanner('studentAlertSuccess', data.message);
+        await pollStudentData();
+      } catch (e) {
+        showBanner('studentAlertError', 'Failed to submit appeal.');
+      }
+    }
+
+    window.quickSkipTodayMeal = quickSkipTodayMeal;
+    window.cancelRequest = cancelRequest;
+    window.appealRequest = appealRequest;
+
+    function renderCalendar(todayStr, skipRequests) {
+      const ym = todayStr.slice(0, 7);
+      document.getElementById('calMonthTitle').textContent = ym;
+      const year = parseInt(todayStr.slice(0, 4), 10);
+      const month = parseInt(todayStr.slice(5, 7), 10);
+      const daysInMonth = new Date(year, month, 0).getDate();
+
+      const byDate = {};
+      for (const r of skipRequests) {
+        if (!r.mealDate.startsWith(ym) || r.status === 'CANCELLED') continue;
+        if (!byDate[r.mealDate]) byDate[r.mealDate] = [];
+        byDate[r.mealDate].push(r);
+      }
+
+      const grid = document.getElementById('monthCalendarGrid');
+      let html = '';
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dStr = `${ym}-${String(d).padStart(2, '0')}`;
+        const items = byDate[dStr] || [];
+        let pills = '';
+        for (const it of items) {
+          const cls = it.status === 'APPROVED' ? 'badge-approved' :
+                      (it.status === 'REJECTED' ? 'badge-rejected' : 'badge-pending');
+          pills += `<span class="cal-pill ${cls}" title="${it.mealType}: ${it.status}">${it.mealType[0]}</span>`;
+        }
+        const isToday = (dStr === todayStr) ? 'border-color: var(--primary); border-width: 2px;' : '';
+        html += `
+          <div class="cal-day" style="${isToday}">
+            <span class="cal-day-num">${d}</span>
+            <div class="cal-dots">${pills}</div>
+          </div>`;
+      }
+      grid.innerHTML = html;
+    }
+
+    async function pollStudentData() {
+      try {
+        const [dashRes, walRes, inbRes] = await Promise.all([
+          fetch('/api/student/dashboard', { headers: { 'X-Session-Token': token } }),
+          fetch('/api/student/wallet',    { headers: { 'X-Session-Token': token } }),
+          fetch('/api/student/inbox',     { headers: { 'X-Session-Token': token } })
+        ]);
+
+        if (dashRes.status === 401) {
+          window.location.href = '/';
+          return;
+        }
+        const dash = await dashRes.json();
+        const wal  = await walRes.json();
+        const inb  = await inbRes.json();
+        if (!dash.ok) return;
+
+        document.getElementById('pollStatusText').textContent = 'Updated just now';
+        document.getElementById('liveServerClockLabel').textContent = dash.clock.nowIstPretty + ' (' + dash.clock.modeName + ')';
+
+        // Demo banner
+        const banner = document.getElementById('demoBanner');
+        if (dash.clock.demoMode) {
+          banner.classList.add('active');
+          document.getElementById('demoBannerTime').textContent = dash.clock.nowIstPretty;
+        } else {
+          banner.classList.remove('active');
+        }
+
+        const stu = dash.student;
+        document.getElementById('studentTopName').textContent = `${stu.fullName} (${stu.roomNumber})`;
+
+        if (lastBalancePaise !== null && lastBalancePaise !== stu.walletBalancePaise) {
+          const hero = document.getElementById('walletHeroCard');
+          hero.classList.remove('flash-new');
+          void hero.offsetWidth;
+          hero.classList.add('flash-new');
+        }
+        lastBalancePaise = stu.walletBalancePaise;
+
+        document.getElementById('walletBalanceDisplay').textContent = stu.walletBalanceFormatted;
+        document.getElementById('totalCreditedDisplay').textContent = stu.totalCreditedFormatted;
+        document.getElementById('skipsUsedDisplay').textContent = `${stu.skipsUsedThisMonth} / ${stu.monthlySkipCap}`;
+        document.getElementById('planNameDisplay').textContent = stu.subscription.planName;
+        document.getElementById('planValidityDisplay').textContent = `${stu.subscription.startDate} to ${stu.subscription.endDate}`;
+        document.getElementById('settlementChoiceBadge').textContent = stu.subscription.settlementChoice;
+        document.getElementById('todayDateLabel').textContent = dash.clock.todayIstDate;
+
+        if (!initializedDates) {
+          document.getElementById('singleDateInput').value = dash.clock.tomorrowIstDate;
+          document.getElementById('rangeStartInput').value = dash.clock.tomorrowIstDate;
+          document.getElementById('rangeEndInput').value   = dash.clock.tomorrowIstDate;
+          document.getElementById('settlementChoiceSelect').value = stu.subscription.settlementChoice;
+          document.getElementById('nextCyclePlanSelect').value = stu.subscription.nextCyclePlanId || '';
+          initializedDates = true;
+        }
+
+        // Render Today's 3 Meals Cards
+        const mealsGrid = document.getElementById('todayMealsGrid');
+        mealsGrid.innerHTML = dash.todayMeals.map(m => {
+          const canSkip = !m.cutoffPassed && m.slotStatus === 'AVAILABLE';
+          let btnLabel = "I'll miss this meal";
+          if (m.slotStatus !== 'AVAILABLE') {
+            btnLabel = `Status: ${m.slotStatus}`;
+          } else if (m.cutoffPassed) {
+            btnLabel = `Cutoff Passed (${m.cutoffTimeOnlyIst})`;
+          }
+          return `
+            <div class="meal-card ${canSkip ? 'cutoff-open' : ''}">
+              <div>
+                <div class="card-header" style="margin-bottom: 6px;">
+                  <span style="font-weight: 800; font-size: 1.05rem;">${m.mealType}</span>
+                  <span class="meal-price-tag">${m.basePriceFormatted}</span>
+                </div>
+                <div class="card-subtitle">Served at ${m.serveTimeIst} &bull; Est. Refund: <strong>${m.refundAmountFormatted}</strong></div>
+                <div class="countdown-box">
+                  <div>Cutoff: <strong>${m.cutoffTimeOnlyIst} IST</strong></div>
+                  <div class="countdown-timer">${formatDuration(m.secondsUntilCutoff)}</div>
+                </div>
+              </div>
+              <button type="button"
+                      class="btn ${canSkip ? 'btn-primary' : 'btn-outline'} btn-lg-skip"
+                      ${canSkip ? '' : 'disabled'}
+                      onclick="quickSkipTodayMeal('${m.mealDate}', '${m.mealType}')">
+                ${btnLabel}
+              </button>
+            </div>
+          `;
+        }).join('');
+
+        // Render Short Rules
+        const r = dash.rules;
+        document.getElementById('shortRulesList').innerHTML = `
+          <li><strong>Cutoff Window:</strong> At least ${r.cutoffHours} hours before meal start time.</li>
+          <li><strong>Refund Credit Policy:</strong> ${r.refundPercentage}% (${r.refundPolicyName}) credited to wallet on approval.</li>
+          <li><strong>Monthly Skip Cap:</strong> Max ${r.monthlySkipCap} meals per calendar month.</li>
+          <li><strong>Counter Verification:</strong> Meals logged at the counter are flagged suspicious.</li>
+        `;
+
+        // Render Calendar
+        renderCalendar(dash.clock.todayIstDate, dash.skipRequests || []);
+
+        // Render Requests Table
+        const reqTbody = document.getElementById('studentRequestsTableBody');
+        if (!dash.skipRequests || dash.skipRequests.length === 0) {
+          reqTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No skip requests yet.</td></tr>';
+        } else {
+          reqTbody.innerHTML = dash.skipRequests.map(req => {
+            const badgeCls = req.status === 'APPROVED' ? 'badge-approved' :
+                             req.status === 'REJECTED' ? 'badge-rejected' :
+                             req.status === 'APPEALED' ? 'badge-appealed' : 'badge-pending';
+            let actionHtml = '-';
+            if (req.status === 'PENDING') {
+              actionHtml = `<button class="btn btn-outline btn-sm" onclick="cancelRequest('${req.id}')">Cancel</button>`;
+            } else if (req.status === 'REJECTED' && !req.appealed) {
+              actionHtml = `<button class="btn btn-primary btn-sm" onclick="appealRequest('${req.id}')">Appeal Once</button>`;
+            } else if (req.appealed) {
+              actionHtml = `<span class="badge badge-info">Appealed</span>`;
+            }
+            return `
+              <tr>
+                <td class="mono">${req.id}</td>
+                <td><strong>${req.mealDate}</strong> &bull; ${req.mealType}</td>
+                <td><span class="badge ${badgeCls}">${req.status}</span></td>
+                <td class="mono">${req.estimatedRefundFormatted || '-'}</td>
+                <td>${req.reason}${req.adminNote ? `<br/><small style="color:var(--text-muted);">Admin: ${req.adminNote}</small>` : ''}</td>
+                <td>${actionHtml}</td>
+              </tr>`;
+          }).join('');
+        }
+
+        // Render Ledger Table
+        if (wal.ok && wal.ledger) {
+          const ledBody = document.getElementById('walletLedgerTableBody');
+          if (wal.ledger.length === 0) {
+            ledBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No ledger entries yet.</td></tr>';
+          } else {
+            ledBody.innerHTML = wal.ledger.map(t => `
+              <tr>
+                <td class="mono">${t.id}</td>
+                <td>${t.timestampIst}</td>
+                <td><span class="badge ${t.type === 'CREDIT' ? 'badge-approved' : 'badge-amber'}">${t.type}</span></td>
+                <td class="mono" style="font-weight:700; color:${t.type === 'CREDIT' ? 'var(--success)' : 'var(--danger)'};">${t.signedAmountFormatted}</td>
+                <td>${t.reason}</td>
+                <td class="mono">${t.refId}</td>
+              </tr>
+            `).join('');
+          }
+        }
+
+        // Render Notifications Inbox
+        if (inb.ok && inb.notifications) {
+          document.getElementById('inboxCountBadge').textContent = inb.notifications.length;
+          const inbBox = document.getElementById('inboxListContainer');
+          if (lastNotifCount !== null && inb.notifications.length > lastNotifCount) {
+            inbBox.classList.remove('flash-new');
+            void inbBox.offsetWidth;
+            inbBox.classList.add('flash-new');
+          }
+          lastNotifCount = inb.notifications.length;
+          if (inb.notifications.length === 0) {
+            inbBox.innerHTML = '<p class="card-subtitle">No notifications yet.</p>';
+          } else {
+            inbBox.innerHTML = inb.notifications.map(n => `
+              <div style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
+                  <strong>${n.title}</strong>
+                  <span style="color:var(--text-muted); font-size:0.76rem;">${n.createdAtIst}</span>
+                </div>
+                <div style="font-size:0.84rem; color:var(--text-muted); margin-top:2px;">${n.message}</div>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (_) {}
+    }
+
+    document.getElementById('multiSkipForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const mode = document.getElementById('skipModeSelect').value;
+      const reason = document.getElementById('skipReasonInput').value.trim();
+      const payload = { mode, reason };
+
+      if (mode === 'MULTI') {
+        payload.startDate = document.getElementById('rangeStartInput').value;
+        payload.endDate   = document.getElementById('rangeEndInput').value;
+        payload.meals = Array.from(document.querySelectorAll('.multi-meal-cb:checked')).map(cb => cb.value);
+      } else {
+        payload.mealDate = document.getElementById('singleDateInput').value;
+        payload.mealType = document.getElementById('singleMealSelect').value;
+        if (mode === 'SWAP') {
+          payload.targetPlanId = document.getElementById('swapTargetPlan').value;
+        }
+      }
+
+      try {
+        const res = await fetch('/api/student/skips', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          showBanner('studentAlertError', data.error + (data.rule ? ` [${data.rule}]` : ''));
+          return;
+        }
+        showBanner('studentAlertSuccess', data.message);
+        await pollStudentData();
+      } catch (_) {
+        showBanner('studentAlertError', 'Failed to submit request.');
+      }
+    });
+
+    document.getElementById('settlementForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const choice = document.getElementById('settlementChoiceSelect').value;
+      const nextCyclePlanId = document.getElementById('nextCyclePlanSelect').value;
+      try {
+        const res = await fetch('/api/student/settlement-choice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
+          body: JSON.stringify({ choice, nextCyclePlanId })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          showBanner('studentAlertError', data.error);
+          return;
+        }
+        showBanner('studentAlertSuccess', data.message);
+        await pollStudentData();
+      } catch (_) {
+        showBanner('studentAlertError', 'Failed to update settlement preference.');
+      }
+    });
+
+    pollStudentData();
+    setInterval(pollStudentData, 3000);
+  </script>
+</body>
+</html>
