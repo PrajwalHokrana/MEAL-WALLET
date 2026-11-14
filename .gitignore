@@ -1,0 +1,18 @@
+# Byte-compiled / optimized
+*.pyc
+__pycache__/
+
+# Build artifacts
+mealwallet
+mealwallet.exe
+build/
+*.o
+*.obj
+
+# Runtime state - these change every time the app runs
+data/sessions.txt
+data/audit.log
+
+# VS Code local settings
+.vscode/settings.json
+.vscode/launch.json

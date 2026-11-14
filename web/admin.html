@@ -3,61 +3,55 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meal Wallet — Admin &amp; Mess Warden Console</title>
+  <title>Meal Wallet — Admin Console</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <div id="demoBanner" class="demo-banner">
-    DEMO CLOCK ACTIVE: <span id="demoBannerTime"></span> — Cutoffs, validity, and settlements use simulated time.
+    DEMO CLOCK ACTIVE: <span id="demoBannerTime"></span> — Cutoffs and settlements use simulated time.
   </div>
 
   <header class="topbar">
     <a href="/admin" class="brand">
       <span class="brand-badge">MW</span>
-      <span>Meal Wallet <small style="font-weight: 500; color: var(--text-muted);">Admin &amp; Mess Console</small></span>
+      <span>Meal Wallet <small style="font-weight: 500; color: var(--text-muted);">Admin Console</small></span>
     </a>
     <div class="topbar-right">
       <span class="poll-indicator">
         <span class="poll-dot"></span>
         <span id="pollStatusText">Updated just now</span>
       </span>
-      <a href="/api/admin/backup" class="btn btn-outline btn-sm" id="exportBackupBtn" target="_blank">Export Backup (CSV)</a>
-      <button type="button" class="btn btn-danger btn-sm" id="resetDemoBtn">Reset Demo Data</button>
-      <button type="button" class="btn btn-outline btn-sm" id="themeToggleBtn">Theme</button>
+      <a href="#" class="btn btn-outline btn-sm" id="exportBackupBtn">Export CSV</a>
+      <button type="button" class="btn btn-danger btn-sm" id="resetDemoBtn">Reset Demo</button>
       <button type="button" class="btn btn-outline btn-sm" id="logoutBtn">Logout</button>
     </div>
   </header>
 
   <main class="container">
-    <!-- Mandatory Ephemeral Hosting Note -->
-    <div class="ephemeral-note" id="ephemeralNoteBanner">
-      Data is stored in text files; on free hosting, data resets when the server restarts.
-    </div>
-
     <div id="adminAlertError" class="alert alert-error" role="alert"></div>
     <div id="adminAlertSuccess" class="alert alert-success" role="status"></div>
 
-    <!-- Tomorrow's Expected Headcount Forecast per Meal -->
+    <!-- Headcount Forecast -->
     <section class="card">
       <div class="card-header">
         <div>
-          <h2 class="card-title">Expected Meal Headcount Forecast (Food Waste Reduction)</h2>
-          <p class="card-subtitle">Enrolled active students minus approved skip requests</p>
+          <h2 class="card-title">Meal Headcount Forecast</h2>
+          <p class="card-subtitle">Enrolled students minus approved skips — tells kitchen how many plates to prepare</p>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
-          <label for="forecastDateInput" style="margin: 0;">Forecast Date:</label>
+          <label for="forecastDateInput" style="margin: 0;">Date:</label>
           <input type="date" id="forecastDateInput" style="width: auto; margin: 0; padding: 6px 10px;" />
         </div>
       </div>
       <div class="grid-3" id="forecastCardsGrid"></div>
     </section>
 
-    <!-- Pending Skip Requests Queue with Suggested Verdict & One-Tap Approve/Reject -->
+    <!-- Pending Skip Requests Queue -->
     <section class="card" id="pendingQueueCard">
       <div class="card-header">
         <div>
-          <h2 class="card-title">Pending &amp; Appealed Skip Requests Queue (<span id="pendingCountBadge">0</span>)</h2>
-          <p class="card-subtitle">System shows SUGGESTED verdict using cutoff rules and counter attendance logs; Admin makes final decision</p>
+          <h2 class="card-title">Skip Requests Queue (<span id="pendingCountBadge">0</span>)</h2>
+          <p class="card-subtitle">Review each request — check submission time vs. cutoff and counter log flags, then approve or reject</p>
         </div>
       </div>
       <div class="table-wrap">
@@ -65,11 +59,12 @@
           <thead>
             <tr>
               <th>Req ID</th>
-              <th>Student &amp; Plan</th>
+              <th>Student</th>
               <th>Date &amp; Meal</th>
               <th>Est. Credit</th>
-              <th>Suggested Verdict &amp; Reasons</th>
-              <th>One-Tap Decision</th>
+              <th>Checks</th>
+              <th>Student Note</th>
+              <th>Decision</th>
             </tr>
           </thead>
           <tbody id="pendingQueueTableBody"></tbody>
@@ -77,135 +72,124 @@
       </div>
     </section>
 
-    <!-- Demo Mode Clock Panel + Live Rules Panel -->
+    <!-- Demo Clock + Rules -->
     <div class="grid-2">
-      <section class="card" style="border-color: var(--accent-amber);">
+      <section class="card" style="border-color: var(--accent-amber-border);">
         <div class="card-header">
           <div>
-            <h2 class="card-title">Admin Demo Clock Controller (Polymorphic Clock)</h2>
-            <p class="card-subtitle">Switch between SystemClock and DemoClock to test cutoff rejections and month-end live</p>
+            <h2 class="card-title">Demo Clock Controller</h2>
+            <p class="card-subtitle">Advance time to test cutoff logic and month-end settlement</p>
           </div>
           <span class="badge badge-amber" id="clockModeBadge">SYSTEM</span>
         </div>
-        <div style="padding: 10px 12px; background: var(--bg-subtle); border-radius: 8px; margin-bottom: 12px; font-family: var(--font-mono); font-size: 0.9rem;">
-          Current Clock Time: <strong id="demoClockCurrentDisplay">-</strong>
+        <div style="padding: 10px 12px; background: var(--bg-subtle); border-radius: 8px; margin-bottom: 12px; font-family: var(--font-mono); font-size: 0.88rem;">
+          Current Time: <strong id="demoClockCurrentDisplay">-</strong>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-          <button type="button" class="btn btn-primary btn-sm" onclick="advanceClock(1, 0)">Advance +1 Hour</button>
-          <button type="button" class="btn btn-primary btn-sm" onclick="advanceClock(6, 0)">Advance +6 Hours</button>
-          <button type="button" class="btn btn-primary btn-sm" onclick="advanceClock(0, 1)">Advance +1 Day</button>
-          <button type="button" class="btn btn-outline btn-sm" onclick="setSystemClock()">Use Real SystemClock</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="advanceClock(1, 0)">+1 Hour</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="advanceClock(6, 0)">+6 Hours</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="advanceClock(0, 1)">+1 Day</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="setSystemClock()">Use Real Time</button>
         </div>
         <form id="customClockForm" style="display: flex; gap: 8px; align-items: flex-end;">
           <div style="flex: 1;">
-            <label for="customIstDateTime">Set Exact Simulated Date &amp; Time (IST)</label>
+            <label for="customIstDateTime">Set Exact Date &amp; Time (IST)</label>
             <input type="datetime-local" id="customIstDateTime" style="margin-bottom: 0;" />
           </div>
-          <button type="submit" class="btn btn-outline" style="height: 38px;">Set Demo Time</button>
+          <button type="submit" class="btn btn-outline" style="height: 38px;">Set</button>
         </form>
       </section>
 
-      <!-- Read-Only Meal Wallet Rules Panel (from live Config) -->
       <section class="card">
         <div class="card-header">
-          <h2 class="card-title">Meal Wallet Rules (Generated from Live Config)</h2>
+          <h2 class="card-title">Active Rules</h2>
           <span class="badge badge-info" id="repoBackendBadge">TEXT</span>
         </div>
-        <div id="adminRulesContent" style="font-size: 0.88rem; line-height: 1.55;"></div>
+        <div id="adminRulesContent" style="font-size: 0.87rem; line-height: 1.6;"></div>
       </section>
     </div>
 
-    <!-- Admin Operational Forms: Create Student, Mark Counter Attendance, Mark Mess Closure -->
+    <!-- Operational Forms -->
     <div class="grid-3">
-      <!-- 1. Create Student Form -->
+      <!-- Create Student -->
       <section class="card">
         <div class="card-header">
-          <h2 class="card-title">1. Create Student Account</h2>
+          <h2 class="card-title">Create Student Account</h2>
         </div>
         <form id="createStudentForm">
           <label for="newStuUsername">Username / Roll No</label>
           <input type="text" id="newStuUsername" placeholder="e.g. bt25cse147" required />
-
-          <label for="newStuFullName">Student Full Name</label>
+          <label for="newStuFullName">Full Name</label>
           <input type="text" id="newStuFullName" placeholder="e.g. Prajwal Hokrana" required />
-
           <label for="newStuRoom">Hostel Room</label>
           <input type="text" id="newStuRoom" placeholder="e.g. B-302" value="B-302" required />
-
-          <label for="newStuPlan">Assign Mess Plan (Offline Payment)</label>
+          <label for="newStuPlan">Mess Plan</label>
           <select id="newStuPlan">
             <option value="PLAN-VEG">Standard Veg Plan (B:35, L:55, D:55)</option>
             <option value="PLAN-NONVEG">Protein Non-Veg Plan (B:45, L:75, D:75)</option>
             <option value="PLAN-PREMIUM">Executive Premium Plan (B:55, L:90, D:95)</option>
           </select>
-
           <button type="submit" class="btn btn-primary" style="width: 100%;">Create &amp; Generate Credentials</button>
         </form>
         <div id="generatedCredBox" class="alert alert-info" style="margin-top: 10px; margin-bottom: 0;"></div>
       </section>
 
-      <!-- 2. Counter Attendance Marker -->
+      <!-- Counter Attendance -->
       <section class="card">
         <div class="card-header">
-          <h2 class="card-title">2. Counter Attendance Log</h2>
+          <h2 class="card-title">Counter Attendance Log</h2>
         </div>
         <p class="card-subtitle" style="margin-bottom: 10px;">
-          Mark a student seen eating at the mess counter. Any skip request for that meal will be flagged SUSPICIOUS.
+          Mark a student seen eating at the counter. Any skip request for that meal will be flagged for review.
         </p>
         <form id="attendanceForm">
-          <label for="attStudentSelect">Select Student</label>
+          <label for="attStudentSelect">Student</label>
           <select id="attStudentSelect" required></select>
-
           <label for="attDateInput">Meal Date</label>
           <input type="date" id="attDateInput" required />
-
-          <label for="attMealSelect">Meal Slot</label>
+          <label for="attMealSelect">Meal</label>
           <select id="attMealSelect">
             <option value="BREAKFAST">BREAKFAST</option>
             <option value="LUNCH" selected>LUNCH</option>
             <option value="DINNER">DINNER</option>
           </select>
-
           <button type="submit" class="btn btn-outline" style="width: 100%;">Log Counter Presence</button>
         </form>
       </section>
 
-      <!-- 3. Mess Closure Day Form -->
+      <!-- Mess Closure -->
       <section class="card">
         <div class="card-header">
-          <h2 class="card-title">3. Mark Mess-Closed Meal</h2>
+          <h2 class="card-title">Mark Mess Closure</h2>
         </div>
         <p class="card-subtitle" style="margin-bottom: 10px;">
-          Auto-credits 100% of the meal price to every enrolled student's wallet (tops up existing skips without double-crediting).
+          Auto-credits 100% of meal price to every enrolled student's wallet.
         </p>
         <form id="closureForm">
           <label for="closureDateInput">Closure Date</label>
           <input type="date" id="closureDateInput" required />
-
           <label for="closureMealSelect">Closed Meal</label>
           <select id="closureMealSelect">
             <option value="BREAKFAST">BREAKFAST</option>
             <option value="LUNCH">LUNCH</option>
             <option value="DINNER" selected>DINNER</option>
           </select>
-
-          <label for="closureReasonInput">Closure Reason</label>
+          <label for="closureReasonInput">Reason</label>
           <input type="text" id="closureReasonInput" placeholder="e.g. Festival Holiday / Kitchen Maintenance" required />
-
           <button type="submit" class="btn btn-primary" style="width: 100%;">Mark Closed &amp; Auto-Credit All</button>
         </form>
       </section>
     </div>
 
-    <!-- Month-End Settlement Runner & Offline Payouts Table -->
+    <!-- Month-End Settlement & Students Roster -->
     <div class="grid-2">
       <section class="card">
         <div class="card-header">
           <div>
-            <h2 class="card-title">Month-End Settlement Runner &amp; Offline Payouts</h2>
-            <p class="card-subtitle">Processes REFUND (creates payout record) or CARRY_FORWARD (reduces next cycle fee)</p>
+            <h2 class="card-title">Month-End Settlement &amp; Payouts</h2>
+            <p class="card-subtitle">Processes REFUND payouts and CARRY_FORWARD discounts</p>
           </div>
-          <button type="button" class="btn btn-primary btn-sm" id="runSettlementBtn">Run Month-End Settlement Now</button>
+          <button type="button" class="btn btn-primary btn-sm" id="runSettlementBtn">Run Settlement</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -223,10 +207,9 @@
         </div>
       </section>
 
-      <!-- Enrolled Students Roster -->
       <section class="card">
         <div class="card-header">
-          <h2 class="card-title">Enrolled Students &amp; Wallet Balances</h2>
+          <h2 class="card-title">Enrolled Students &amp; Balances</h2>
         </div>
         <div class="table-wrap">
           <table>
@@ -234,9 +217,9 @@
               <tr>
                 <th>ID / Username</th>
                 <th>Name &amp; Room</th>
-                <th>Plan &amp; Validity End</th>
-                <th>Wallet Balance</th>
-                <th>Month-End Choice</th>
+                <th>Plan &amp; End Date</th>
+                <th>Balance</th>
+                <th>Month-End</th>
               </tr>
             </thead>
             <tbody id="studentsRosterTableBody"></tbody>
@@ -245,15 +228,15 @@
       </section>
     </div>
 
-    <!-- Human-Readable Audit Log Viewer -->
+    <!-- Audit Log -->
     <section class="card">
       <div class="card-header">
         <div>
-          <h2 class="card-title">Human-Readable File Audit Log (<code>data/audit.log</code>)</h2>
-          <p class="card-subtitle">Every state change is flushed to disk with UTC and IST timestamps</p>
+          <h2 class="card-title">Audit Log</h2>
+          <p class="card-subtitle">Every action logged with UTC and IST timestamps</p>
         </div>
       </div>
-      <pre id="auditLogPre" style="background: var(--bg-subtle); padding: 14px; border-radius: 10px; font-family: var(--font-mono); font-size: 0.78rem; max-height: 260px; overflow-y: auto; white-space: pre-wrap;"></pre>
+      <pre id="auditLogPre" style="background: var(--bg-subtle); padding: 14px; border-radius: 10px; font-family: var(--font-mono); font-size: 0.77rem; max-height: 260px; overflow-y: auto; white-space: pre-wrap;"></pre>
     </section>
   </main>
 
@@ -261,21 +244,12 @@
     const token = localStorage.getItem('mw_token') || '';
     if (!token) window.location.href = '/';
 
-    const savedTheme = localStorage.getItem('mw_theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    document.getElementById('themeToggleBtn').addEventListener('click', () => {
-      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('mw_theme', next);
-    });
-
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await fetch('/api/logout', { method: 'POST', headers: { 'X-Session-Token': token } });
       localStorage.removeItem('mw_token');
       window.location.href = '/';
     });
 
-    // Attach token to backup download link
     document.getElementById('exportBackupBtn').addEventListener('click', async (e) => {
       e.preventDefault();
       const res = await fetch('/api/admin/backup', { headers: { 'X-Session-Token': token } });
@@ -283,9 +257,7 @@
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = 'mealwallet_backup_dump.csv';
-      a.click();
+      a.href = url; a.download = 'mealwallet_backup.csv'; a.click();
       URL.revokeObjectURL(url);
     });
 
@@ -307,15 +279,10 @@
           body: JSON.stringify({ decision })
         });
         const data = await res.json();
-        if (!res.ok || !data.ok) {
-          showAdminBanner('adminAlertError', data.error);
-          return;
-        }
+        if (!res.ok || !data.ok) { showAdminBanner('adminAlertError', data.error); return; }
         showAdminBanner('adminAlertSuccess', data.message);
         await pollAdminData();
-      } catch (_) {
-        showAdminBanner('adminAlertError', 'Failed to record decision.');
-      }
+      } catch (_) { showAdminBanner('adminAlertError', 'Failed to record decision.'); }
     }
 
     async function markPayoutPaid(payoutId) {
@@ -326,15 +293,10 @@
           body: JSON.stringify({ note: 'Paid offline via UPI by Admin' })
         });
         const data = await res.json();
-        if (!res.ok || !data.ok) {
-          showAdminBanner('adminAlertError', data.error);
-          return;
-        }
+        if (!res.ok || !data.ok) { showAdminBanner('adminAlertError', data.error); return; }
         showAdminBanner('adminAlertSuccess', data.message);
         await pollAdminData();
-      } catch (_) {
-        showAdminBanner('adminAlertError', 'Failed to mark payout paid.');
-      }
+      } catch (_) { showAdminBanner('adminAlertError', 'Failed to mark payout paid.'); }
     }
 
     async function advanceClock(hours, days) {
@@ -344,10 +306,7 @@
         body: JSON.stringify({ action: 'ADVANCE', hours, days })
       });
       const data = await res.json();
-      if (data.ok) {
-        showAdminBanner('adminAlertSuccess', data.message);
-        await pollAdminData();
-      }
+      if (data.ok) { showAdminBanner('adminAlertSuccess', data.message); await pollAdminData(); }
     }
 
     async function setSystemClock() {
@@ -357,10 +316,7 @@
         body: JSON.stringify({ action: 'SET_MODE', demoMode: false })
       });
       const data = await res.json();
-      if (data.ok) {
-        showAdminBanner('adminAlertSuccess', data.message);
-        await pollAdminData();
-      }
+      if (data.ok) { showAdminBanner('adminAlertSuccess', data.message); await pollAdminData(); }
     }
 
     window.decideRequest = decideRequest;
@@ -378,23 +334,14 @@
         body: JSON.stringify({ action: 'SET_MODE', demoMode: true, istDateTime })
       });
       const data = await res.json();
-      if (data.ok) {
-        showAdminBanner('adminAlertSuccess', data.message);
-        await pollAdminData();
-      }
+      if (data.ok) { showAdminBanner('adminAlertSuccess', data.message); await pollAdminData(); }
     });
 
     document.getElementById('resetDemoBtn').addEventListener('click', async () => {
-      if (!confirm('Reset all files in DATA_DIR back to the clean demo seed state?')) return;
-      const res = await fetch('/api/admin/demo/reset', {
-        method: 'POST',
-        headers: { 'X-Session-Token': token }
-      });
+      if (!confirm('Reset all data back to the demo seed state?')) return;
+      const res = await fetch('/api/admin/demo/reset', { method: 'POST', headers: { 'X-Session-Token': token } });
       const data = await res.json();
-      if (data.ok) {
-        showAdminBanner('adminAlertSuccess', data.message);
-        await pollAdminData();
-      }
+      if (data.ok) { showAdminBanner('adminAlertSuccess', data.message); await pollAdminData(); }
     });
 
     document.getElementById('createStudentForm').addEventListener('submit', async (e) => {
@@ -411,12 +358,9 @@
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok || !data.ok) {
-        showAdminBanner('adminAlertError', data.error);
-        return;
-      }
+      if (!res.ok || !data.ok) { showAdminBanner('adminAlertError', data.error); return; }
       const credBox = document.getElementById('generatedCredBox');
-      credBox.innerHTML = `<strong>Student Created!</strong><br/>Username: <code>${data.username}</code> &bull; Initial Password: <code>${data.generatedPassword}</code> (Must change on first login)`;
+      credBox.innerHTML = `<strong>Account Created!</strong><br/>Username: <code>${data.username}</code> &bull; Temp Password: <code>${data.generatedPassword}</code><br/><small>Student must change this on first login.</small>`;
       credBox.classList.add('show');
       document.getElementById('newStuUsername').value = '';
       document.getElementById('newStuFullName').value = '';
@@ -436,10 +380,7 @@
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok || !data.ok) {
-        showAdminBanner('adminAlertError', data.error);
-        return;
-      }
+      if (!res.ok || !data.ok) { showAdminBanner('adminAlertError', data.error); return; }
       showAdminBanner('adminAlertSuccess', data.message);
       await pollAdminData();
     });
@@ -457,10 +398,7 @@
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok || !data.ok) {
-        showAdminBanner('adminAlertError', data.error);
-        return;
-      }
+      if (!res.ok || !data.ok) { showAdminBanner('adminAlertError', data.error); return; }
       showAdminBanner('adminAlertSuccess', data.message);
       await pollAdminData();
     });
@@ -472,10 +410,7 @@
         body: JSON.stringify({})
       });
       const data = await res.json();
-      if (!res.ok || !data.ok) {
-        showAdminBanner('adminAlertError', data.error);
-        return;
-      }
+      if (!res.ok || !data.ok) { showAdminBanner('adminAlertError', data.error); return; }
       showAdminBanner('adminAlertSuccess', data.message);
       await pollAdminData();
     });
@@ -492,15 +427,12 @@
           fetch('/api/admin/audit', { headers: { 'X-Session-Token': token } })
         ]);
 
-        if (skipsRes.status === 401) {
-          window.location.href = '/';
-          return;
-        }
+        if (skipsRes.status === 401) { window.location.href = '/'; return; }
 
-        const skipsData = await skipsRes.json();
+        const skipsData    = await skipsRes.json();
         const forecastData = await forecastRes.json();
-        const rulesData = await rulesRes.json();
-        const auditData = await auditRes.json();
+        const rulesData    = await rulesRes.json();
+        const auditData    = await auditRes.json();
         if (!skipsData.ok) return;
 
         document.getElementById('pollStatusText').textContent = 'Updated just now';
@@ -509,12 +441,8 @@
         document.getElementById('clockModeBadge').textContent = clk.modeName;
 
         const banner = document.getElementById('demoBanner');
-        if (clk.demoMode) {
-          banner.classList.add('active');
-          document.getElementById('demoBannerTime').textContent = clk.nowIstPretty;
-        } else {
-          banner.classList.remove('active');
-        }
+        if (clk.demoMode) { banner.classList.add('active'); document.getElementById('demoBannerTime').textContent = clk.nowIstPretty; }
+        else banner.classList.remove('active');
 
         if (!datesInitialized) {
           document.getElementById('forecastDateInput').value = clk.tomorrowIstDate;
@@ -524,7 +452,7 @@
           datesInitialized = true;
         }
 
-        // Forecast Cards
+        // Forecast
         if (forecastData.ok && forecastData.forecast) {
           document.getElementById('forecastCardsGrid').innerHTML = forecastData.forecast.map(f => `
             <div class="meal-card">
@@ -535,46 +463,48 @@
                 </span>
               </div>
               <div style="font-size: 2rem; font-weight: 800; font-family: var(--font-mono); color: var(--primary); margin: 4px 0;">
-                ${f.expectedHeadcount} <small style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted);">plates</small>
+                ${f.expectedHeadcount} <small style="font-size: 0.88rem; font-weight: 500; color: var(--text-muted);">plates</small>
               </div>
               <div class="card-subtitle">
                 Enrolled: <strong>${f.totalEnrolled}</strong> &bull; Approved Skips: <strong>${f.approvedSkips}</strong>
               </div>
-            </div>
-          `).join('');
+            </div>`).join('');
         }
 
-        // Pending Skip Queue
+        // Pending queue — factual flags only, NO "SUGGESTED: APPROVE/REJECT"
         const pendingList = skipsData.skips || [];
         document.getElementById('pendingCountBadge').textContent = pendingList.length;
         const currentIdsJson = JSON.stringify(pendingList.map(r => r.id + r.status));
         if (lastPendingIdsJson !== null && lastPendingIdsJson !== currentIdsJson) {
           const qCard = document.getElementById('pendingQueueCard');
-          qCard.classList.remove('flash-new');
-          void qCard.offsetWidth;
-          qCard.classList.add('flash-new');
+          qCard.classList.remove('flash-new'); void qCard.offsetWidth; qCard.classList.add('flash-new');
         }
         lastPendingIdsJson = currentIdsJson;
 
         const qBody = document.getElementById('pendingQueueTableBody');
         if (pendingList.length === 0) {
-          qBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">All caught up! No pending skip requests in queue.</td></tr>';
+          qBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No pending requests.</td></tr>';
         } else {
           qBody.innerHTML = pendingList.map(r => {
             const sv = r.suggested || { verdict: 'APPROVE', reasons: [] };
-            const svBadge = sv.verdict === 'APPROVE' ? 'badge-approved' : 'badge-rejected';
-            const reasonsHtml = (sv.reasons || []).map(rs => `<div>&bull; ${rs}</div>`).join('');
+            // Build factual check badges from the reasons array
+            const cutoffOk  = sv.reasons.some(rs => rs.toLowerCase().includes('before') || rs.toLowerCase().includes('cutoff') && !rs.toLowerCase().includes('missed') && !rs.toLowerCase().includes('late'));
+            const seenAtCtr = sv.reasons.some(rs => rs.toLowerCase().includes('counter'));
+            const lateSubmit = sv.reasons.some(rs => rs.toLowerCase().includes('late') || rs.toLowerCase().includes('after') || rs.toLowerCase().includes('missed cutoff'));
+
+            let checksHtml = '';
+            if (lateSubmit) checksHtml += `<span class="badge badge-rejected" style="margin-bottom:3px;">&#9888; Submitted after cutoff</span><br/>`;
+            else checksHtml += `<span class="badge badge-approved" style="margin-bottom:3px;">&#10003; Submitted before cutoff</span><br/>`;
+            if (seenAtCtr) checksHtml += `<span class="badge badge-rejected" style="margin-bottom:3px;">&#9888; Seen at counter</span>`;
+
             return `
               <tr>
                 <td class="mono">${r.id}${r.appealed ? '<br/><span class="badge badge-info">APPEALED</span>' : ''}</td>
                 <td><strong>${r.studentName}</strong> (${r.studentUsername})<br/><small style="color:var(--text-muted);">Room ${r.roomNumber} &bull; ${r.planId}</small></td>
                 <td><strong>${r.mealDate}</strong><br/>${r.mealType}</td>
                 <td class="mono"><strong>${r.estimatedRefundFormatted || '-'}</strong><br/><small>of ${r.baseMealPriceFormatted || '-'}</small></td>
-                <td>
-                  <span class="badge ${svBadge}">SUGGESTED: ${sv.verdict}</span>
-                  <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">${reasonsHtml}</div>
-                  <div style="font-size: 0.78rem; margin-top: 3px;"><em>Student note: "${r.reason}"</em></div>
-                </td>
+                <td>${checksHtml || '<span style="color:var(--text-muted);">No flags</span>'}</td>
+                <td><em style="font-size:0.83rem;">"${r.reason}"</em></td>
                 <td>
                   <div style="display: flex; gap: 6px;">
                     <button class="btn btn-primary btn-sm" onclick="decideRequest('${r.id}', 'APPROVE')">Approve</button>
@@ -585,14 +515,12 @@
           }).join('');
         }
 
-        // Student Roster & Attendance Select (Preserve selection across polls!)
+        // Students roster + attendance select
         const students = skipsData.students || [];
         const attSelect = document.getElementById('attStudentSelect');
         const prevSelectedStu = attSelect.value;
         attSelect.innerHTML = students.map(s => `<option value="${s.id}">${s.fullName} (${s.username} - ${s.roomNumber})</option>`).join('');
-        if (prevSelectedStu && students.some(s => s.id === prevSelectedStu)) {
-          attSelect.value = prevSelectedStu;
-        }
+        if (prevSelectedStu && students.some(s => s.id === prevSelectedStu)) attSelect.value = prevSelectedStu;
 
         document.getElementById('studentsRosterTableBody').innerHTML = students.map(s => `
           <tr>
@@ -601,51 +529,43 @@
             <td>${s.planId}<br/><small style="color:var(--text-muted);">Ends ${s.endDate}</small></td>
             <td class="mono" style="font-weight:700; color:var(--primary);">${s.balanceFormatted}</td>
             <td><span class="badge ${s.settlementChoice === 'REFUND' ? 'badge-amber' : 'badge-info'}">${s.settlementChoice}</span></td>
-          </tr>
-        `).join('');
+          </tr>`).join('');
 
-        // Payouts Table
+        // Payouts
         const payouts = skipsData.payouts || [];
         const pBody = document.getElementById('payoutsTableBody');
         if (payouts.length === 0) {
-          pBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No refund payouts generated yet. Run Month-End Settlement to generate payouts.</td></tr>';
+          pBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No payouts yet. Run Month-End Settlement to generate.</td></tr>';
         } else {
           pBody.innerHTML = payouts.map(p => `
             <tr>
               <td class="mono">${p.id}</td>
               <td>${p.studentName}</td>
               <td class="mono" style="font-weight:700;">${p.amountFormatted}</td>
-              <td>
-                <span class="badge ${p.paidOffline ? 'badge-approved' : 'badge-pending'}">
-                  ${p.paidOffline ? 'PAID OFFLINE' : 'PENDING PAYOUT'}
-                </span>
+              <td><span class="badge ${p.paidOffline ? 'badge-approved' : 'badge-pending'}">${p.paidOffline ? 'PAID' : 'PENDING'}</span></td>
+              <td>${p.paidOffline
+                ? `<small style="color:var(--text-muted);">Paid at ${p.paidAtIst}</small>`
+                : `<button class="btn btn-primary btn-sm" onclick="markPayoutPaid('${p.id}')">Mark Paid</button>`}
               </td>
-              <td>
-                ${p.paidOffline
-                  ? `<small style="color:var(--text-muted);">Paid at ${p.paidAtIst}</small>`
-                  : `<button class="btn btn-primary btn-sm" onclick="markPayoutPaid('${p.id}')">Mark Paid Offline</button>`}
-              </td>
-            </tr>
-          `).join('');
+            </tr>`).join('');
         }
 
-        // Live Rules Panel
+        // Rules panel
         if (rulesData.ok && rulesData.rules) {
           const rl = rulesData.rules;
           document.getElementById('repoBackendBadge').textContent = rl.repositoryBackend;
-          document.getElementById('ephemeralNoteBanner').textContent = rl.ephemeralDiskNote;
           document.getElementById('adminRulesContent').innerHTML = `
-            <p style="margin-bottom:6px;"><strong>1. Cutoff Rule:</strong> Skip requests must be submitted at least <strong>${rl.cutoffHours} hours</strong> before meal start (Breakfast 08:00 AM, Lunch 12:30 PM, Dinner 08:00 PM IST).</p>
-            <p style="margin-bottom:6px;"><strong>2. Refund Policy:</strong> <code>${rl.refundPolicyDescription}</code></p>
-            <p style="margin-bottom:6px;"><strong>3. Monthly Skip Cap:</strong> Max <strong>${rl.monthlySkipCap} meals</strong> per student per calendar month.</p>
-            <p style="margin-bottom:6px;"><strong>4. Verification &amp; Fraud Check:</strong> ${rl.verificationExplanation}</p>
-            <p><strong>5. Month-End Settlement:</strong> ${rl.monthEndExplanation}</p>
+            <p style="margin-bottom:7px;"><strong>Cutoff:</strong> Skip must be submitted at least <strong>${rl.cutoffHours} hours</strong> before meal start (Breakfast 08:00, Lunch 12:30, Dinner 20:00 IST).</p>
+            <p style="margin-bottom:7px;"><strong>Refund Policy:</strong> ${rl.refundPolicyDescription}</p>
+            <p style="margin-bottom:7px;"><strong>Monthly Cap:</strong> Max <strong>${rl.monthlySkipCap} meals</strong> per student per month.</p>
+            <p style="margin-bottom:7px;"><strong>Fraud Check:</strong> ${rl.verificationExplanation}</p>
+            <p><strong>Month-End:</strong> ${rl.monthEndExplanation}</p>
           `;
         }
 
-        // Audit Log
+        // Audit log
         if (auditData.ok && auditData.lines) {
-          document.getElementById('auditLogPre').textContent = auditData.lines.join('\n') || 'No audit log entries yet.';
+          document.getElementById('auditLogPre').textContent = auditData.lines.join('\n') || 'No entries yet.';
         }
       } catch (_) {}
     }

@@ -57,23 +57,23 @@ int main(int argc, char* argv[]) {
     std::string lanIp = httplib::Server::detectLanIp();
 
     std::cout << "\n========================================================================\n";
-    std::cout << "  MEAL WALLET — C++17 HOSTEL MESS REFUND SYSTEM\n";
+    std::cout << "  MEAL WALLET — Hostel Mess Refund System\n";
     std::cout << "========================================================================\n";
-    std::cout << "  Repository Mode : " << Config::repositoryMode() << " (DATA_DIR=" << Config::dataDir() << ")\n";
-    std::cout << "  Refund Policy   : " << service.refundPolicy().description() << "\n";
-    std::cout << "  Cutoff Window   : " << Config::cutoffHoursBeforeMeal() << " hours before meal start\n";
-    std::cout << "  Monthly Skip Cap: " << Config::monthlySkipCap() << " meals / month\n";
+    std::cout << "  Data Directory : " << Config::dataDir() << "\n";
+    std::cout << "  Refund Policy  : " << service.refundPolicy().description() << "\n";
+    std::cout << "  Cutoff Window  : " << Config::cutoffHoursBeforeMeal() << " hours before meal start\n";
+    std::cout << "  Monthly Cap    : " << Config::monthlySkipCap() << " skips / month\n";
     std::cout << "------------------------------------------------------------------------\n";
-    std::cout << "  Local URL       : http://localhost:" << port << "\n";
-    std::cout << "  LAN / Hotspot   : http://" << lanIp << ":" << port << "  <-- Open on 2nd Laptop!\n";
-    std::cout << "  Health Check    : http://localhost:" << port << "/healthz\n";
+    std::cout << "  Local URL      : http://localhost:" << port << "\n";
+    std::cout << "  LAN / Hotspot  : http://" << lanIp << ":" << port << "  <-- Open on 2nd device!\n";
+    std::cout << "  Health Check   : http://localhost:" << port << "/healthz\n";
     std::cout << "------------------------------------------------------------------------\n";
-    std::cout << "  Demo Accounts   : admin / " << Config::adminSeedPassword() << " (Admin Console)\n";
-    std::cout << "                    aarav / student123 (Student - Veg Plan)\n";
-    std::cout << "                    priya / student123 (Student - Non-Veg Plan)\n";
-    std::cout << "                    rohan / student123 (Student - Premium, Near Month-End)\n";
-    std::cout << "                    sneha / student123 (Student - Fraud Case Demo)\n";
-    std::cout << "                    vikram / firstlogin (Student - Forced Password Change)\n";
+    std::cout << "  Admin login    : admin / " << Config::adminSeedPassword() << "\n";
+    std::cout << "  Students       : aakarsh / student123\n";
+    std::cout << "                   dhiman  / student123\n";
+    std::cout << "                   utkarsh / student123\n";
+    std::cout << "                   prajwal / student123\n";
+    std::cout << "                   vikram  / firstlogin (must change on first login)\n";
     std::cout << "========================================================================\n\n";
 
     ApiServer server(service, "./web");
