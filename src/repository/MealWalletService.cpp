@@ -570,7 +570,7 @@ std::vector<MealWalletService::SeedCredential> MealWalletService::resetAndSeedDe
     }
 
     // Default rules
-    Config::setCutoffHoursBeforeMeal(6);
+    Config::setCutoffHoursBeforeMeal(2);
     Config::setMonthlySkipCap(10);
     Config::setRefundPolicyType("PERCENT");
     Config::setRefundPercent(80);
@@ -929,6 +929,38 @@ MealWalletService::CreatedStudentInfo MealWalletService::createStudent(
                        "Created student " + username + " (" + uid + ") with plan " + planId);
 
     return CreatedStudentInfo{stu, tempPass};
+}
+
+Subscription MealWalletService::renewStudentSubscription(const std::string& studentId,
+                                                         const std::string& planId,
+                                                         const Date& cycleStart,
+                                                         const Date& cycleEnd,
+                                                         const std::string& adminUsername) {
+    compat::LockGuard lock(mutex_);
+    auto stuIt = students_.find(studentId);
+    if (stuIt == students_.end()) {
+        throw MealWalletException("Student not found.", "NOT_FOUND");
+    }
+    auto pIt = plans_.find(planId);
+    if (pIt == plans_.end()) {
+        throw MealWalletException("Meal plan not found: " + planId, "INVALID_PLAN");
+    }
+    if (cycleEnd < cycleStart) {
+        throw MealWalletException("Cycle end date cannot precede start date.", "INVALID_DATES");
+    }
+
+    auto& stu = stuIt->second;
+    stu.subscription().renew(cycleStart, cycleEnd, planId, pIt->second->variant());
+    saveUsersAndSubsUnlocked();
+
+    std::string planName = pIt->second->displayName();
+    pushNotificationUnlocked(studentId, "Meal Plan Renewed",
+                             "Your " + planName + " has been renewed from " +
+                             cycleStart.toString() + " to " + cycleEnd.toString() + ".");
+    writeAuditUnlocked(adminUsername, "SUBSCRIPTION_RENEWED",
+                       "Student=" + stu.username() + " Plan=" + planId +
+                       " Period=" + cycleStart.toString() + ".." + cycleEnd.toString());
+    return stu.subscription();
 }
 
 int MealWalletService::countStudentSkipsInMonth(const std::string& studentId,

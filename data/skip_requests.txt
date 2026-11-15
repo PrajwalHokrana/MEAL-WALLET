@@ -1,1 +1,5 @@
-﻿#MEALWALLET_V1|skip_requests
+#MEALWALLET_V1|skip_requests
+REQ-0001|USR-0003|2026-11-15|DINNER|APPROVED|Won't be eating dinner today|1794717673|0||Approved by Admin|1794721995|
+REQ-0002|USR-0003|2026-11-16|DINNER|APPROVED|Won't be eating dinner today|1794804180|0||Approved by Admin|1794721994|
+REQ-0003|USR-0003|2026-11-15|LUNCH|APPROVED|Won't be eating lunch today|1794699300|0||Approved by Admin|1794699300|
+REQ-0004|USR-0003|2026-11-15|BREAKFAST|REJECTED|Won't be eating breakfast today|1794699300|0||Rejected by Admin review.|1794699300|

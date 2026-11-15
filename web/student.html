@@ -7,12 +7,8 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div id="demoBanner" class="demo-banner">
-    DEMO CLOCK ACTIVE: <span id="demoBannerTime"></span> — Meal cutoffs use simulated time.
-  </div>
-
   <header class="topbar">
-    <a href="/student" class="brand">
+    <a href="/student.html" class="brand">
       <span class="brand-badge">MW</span>
       <span>Meal Wallet <small style="font-weight: 500; color: var(--text-muted);">Student Portal</small></span>
     </a>
@@ -44,6 +40,12 @@
     <div id="studentAlertError" class="alert alert-error" role="alert"></div>
     <div id="studentAlertSuccess" class="alert alert-success" role="status"></div>
 
+    <!-- Plan Expiry Warning Banner (Dynamic 2-Day Reminder) -->
+    <div id="planExpiryAlertBanner" class="alert" style="display:none; margin-bottom:18px; align-items:center; justify-content:space-between; gap:12px;">
+      <div id="planExpiryAlertText"></div>
+      <span class="badge" id="planExpiryBadge" style="flex-shrink:0;"></span>
+    </div>
+
     <!-- Wallet Hero -->
     <section class="wallet-hero" id="walletHeroCard">
       <div>
@@ -69,7 +71,7 @@
       <div class="card-header">
         <div>
           <h2 class="card-title">Today's Meals &mdash; <span id="todayDateLabel">-</span></h2>
-          <p class="card-subtitle">Submit a skip at least 6 hours before the meal to get a refund credit</p>
+          <p class="card-subtitle">Submit a skip before the meal preparation cutoff to get a refund credit</p>
         </div>
         <span class="mono" style="font-size: 0.83rem; color: var(--text-muted);" id="liveServerClockLabel"></span>
       </div>
@@ -145,7 +147,7 @@
       <section class="card">
         <div class="card-header">
           <h2 class="card-title">Month-End Settlement Preference</h2>
-          <span class="badge badge-amber">Default: Carry Forward</span>
+          <span class="badge badge-info" id="headerSettlementBadge">Active: CARRY_FORWARD</span>
         </div>
         <p class="card-subtitle" style="margin-bottom: 12px;">
           How should your wallet balance be settled when your plan cycle ends?
@@ -398,11 +400,7 @@
         if (!dash.ok) return;
 
         document.getElementById('pollStatusText').textContent = 'Updated just now';
-        document.getElementById('liveServerClockLabel').textContent = dash.clock.nowIstPretty + ' (' + dash.clock.modeName + ')';
-
-        const banner = document.getElementById('demoBanner');
-        if (dash.clock.demoMode) { banner.classList.add('active'); document.getElementById('demoBannerTime').textContent = dash.clock.nowIstPretty; }
-        else banner.classList.remove('active');
+        document.getElementById('liveServerClockLabel').textContent = dash.clock.nowIstPretty;
 
         const stu = dash.student;
         document.getElementById('studentTopName').textContent = `${stu.fullName} (${stu.roomNumber})`;
@@ -418,7 +416,38 @@
         document.getElementById('skipsUsedDisplay').textContent = `${stu.skipsUsedThisMonth} / ${stu.monthlySkipCap}`;
         document.getElementById('planNameDisplay').textContent = stu.subscription.planName;
         document.getElementById('planValidityDisplay').textContent = `${stu.subscription.startDate} to ${stu.subscription.endDate}`;
-        document.getElementById('settlementChoiceBadge').textContent = stu.subscription.settlementChoice;
+        const activeChoice = stu.subscription.settlementChoice;
+        document.getElementById('settlementChoiceBadge').textContent = activeChoice;
+        const hBadge = document.getElementById('headerSettlementBadge');
+        if (hBadge) {
+          hBadge.textContent = 'Active: ' + activeChoice;
+          hBadge.className = (activeChoice === 'REFUND') ? 'badge badge-approved' : 'badge badge-info';
+        }
+
+        // 2-Day Plan Expiry Warning
+        const expBanner = document.getElementById('planExpiryAlertBanner');
+        const expText = document.getElementById('planExpiryAlertText');
+        const expBadge = document.getElementById('planExpiryBadge');
+        if (expBanner && stu.subscription) {
+          const daysRem = stu.subscription.daysRemaining;
+          if (daysRem !== undefined && daysRem <= 2 && daysRem >= 0) {
+            expBanner.style.display = 'flex';
+            expBanner.className = 'alert alert-warning show';
+            expBadge.className = 'badge badge-amber';
+            expBadge.textContent = daysRem === 0 ? 'EXPIRES TODAY' : `${daysRem} DAY${daysRem > 1 ? 'S' : ''} LEFT`;
+            expText.innerHTML = `<strong>⚠️ Plan Expiry Reminder:</strong> Your active mess plan ends on <strong>${stu.subscription.endDate}</strong> (${daysRem === 0 ? 'expires today' : daysRem === 1 ? '1 day remaining' : '2 days remaining'}). Please contact the mess admin to renew your plan!`;
+          } else if (daysRem !== undefined && daysRem < 0) {
+            expBanner.style.display = 'flex';
+            expBanner.className = 'alert alert-error show';
+            expBadge.className = 'badge badge-rejected';
+            expBadge.textContent = 'EXPIRED';
+            expText.innerHTML = `<strong>⛔ Plan Expired:</strong> Your mess plan ended on <strong>${stu.subscription.endDate}</strong>. Please renew with the warden to continue submitting skips.`;
+          } else {
+            expBanner.style.display = 'none';
+            expBanner.classList.remove('show');
+          }
+        }
+
         document.getElementById('todayDateLabel').textContent = dash.clock.todayIstDate;
 
         if (!initializedDates) {

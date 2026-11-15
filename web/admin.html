@@ -7,12 +7,8 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div id="demoBanner" class="demo-banner">
-    DEMO CLOCK ACTIVE: <span id="demoBannerTime"></span> — Cutoffs and settlements use simulated time.
-  </div>
-
   <header class="topbar">
-    <a href="/admin" class="brand">
+    <a href="/admin.html" class="brand">
       <span class="brand-badge">MW</span>
       <span>Meal Wallet <small style="font-weight: 500; color: var(--text-muted);">Admin Console</small></span>
     </a>
@@ -21,8 +17,10 @@
         <span class="poll-dot"></span>
         <span id="pollStatusText">Updated just now</span>
       </span>
+      <span class="poll-indicator" style="font-family: var(--font-mono); font-size: 0.84rem;">
+        <span id="adminClockText">-</span>
+      </span>
       <a href="#" class="btn btn-outline btn-sm" id="exportBackupBtn">Export CSV</a>
-      <button type="button" class="btn btn-danger btn-sm" id="resetDemoBtn">Reset Demo</button>
       <button type="button" class="btn btn-outline btn-sm" id="logoutBtn">Logout</button>
     </div>
   </header>
@@ -72,35 +70,34 @@
       </div>
     </section>
 
-    <!-- Demo Clock + Rules -->
-    <div class="grid-2">
-      <section class="card" style="border-color: var(--accent-amber-border);">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">Demo Clock Controller</h2>
-            <p class="card-subtitle">Advance time to test cutoff logic and month-end settlement</p>
-          </div>
-          <span class="badge badge-amber" id="clockModeBadge">SYSTEM</span>
+    <!-- Demo Clock Controller -->
+    <section class="card" style="margin-bottom: 24px;">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Demo Clock Controller</h2>
+          <p class="card-subtitle">Advance simulated time to test cutoff rules, meal status transitions, and month-end settlement</p>
         </div>
-        <div style="padding: 10px 12px; background: var(--bg-subtle); border-radius: 8px; margin-bottom: 12px; font-family: var(--font-mono); font-size: 0.88rem;">
-          Current Time: <strong id="demoClockCurrentDisplay">-</strong>
+        <span class="badge badge-amber" id="clockModeBadge">SYSTEM</span>
+      </div>
+      <div style="padding: 10px 14px; background: var(--bg-subtle); border-radius: 8px; margin-bottom: 12px; font-family: var(--font-mono); font-size: 0.9rem;">
+        Current Time: <strong id="demoClockCurrentDisplay">-</strong>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+        <button type="button" class="btn btn-primary btn-sm" onclick="advanceClock(1, 0)">+1 Hour</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="advanceClock(6, 0)">+6 Hours</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="advanceClock(0, 1)">+1 Day</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="setSystemClock()">Use Real Time</button>
+      </div>
+      <form id="customClockForm" style="display: flex; gap: 8px; align-items: flex-end;">
+        <div style="flex: 1;">
+          <label for="customIstDateTime">Set Exact Date &amp; Time (IST)</label>
+          <input type="datetime-local" id="customIstDateTime" style="margin-bottom: 0;" />
         </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-          <button type="button" class="btn btn-primary btn-sm" onclick="advanceClock(1, 0)">+1 Hour</button>
-          <button type="button" class="btn btn-primary btn-sm" onclick="advanceClock(6, 0)">+6 Hours</button>
-          <button type="button" class="btn btn-primary btn-sm" onclick="advanceClock(0, 1)">+1 Day</button>
-          <button type="button" class="btn btn-outline btn-sm" onclick="setSystemClock()">Use Real Time</button>
-        </div>
-        <form id="customClockForm" style="display: flex; gap: 8px; align-items: flex-end;">
-          <div style="flex: 1;">
-            <label for="customIstDateTime">Set Exact Date &amp; Time (IST)</label>
-            <input type="datetime-local" id="customIstDateTime" style="margin-bottom: 0;" />
-          </div>
-          <button type="submit" class="btn btn-outline" style="height: 38px;">Set</button>
-        </form>
-      </section>
+        <button type="submit" class="btn btn-outline" style="height: 38px;">Set Clock</button>
+      </form>
+    </section>
 
-    </div>
+
 
     <!-- Operational Forms -->
     <div class="grid-3">
@@ -149,6 +146,41 @@
           <button type="submit" class="btn btn-primary" style="width: 100%;">Mark Closed &amp; Auto-Credit All</button>
         </form>
       </section>
+
+      <!-- Renew Student Subscription -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Renew Student Plan</h2>
+        </div>
+        <p class="card-subtitle" style="margin-bottom: 10px;">
+          Extends validity for an existing student without recreating accounts.
+        </p>
+        <form id="renewSubscriptionForm">
+          <label for="renewStudentSelect">Select Student</label>
+          <select id="renewStudentSelect" required>
+            <option value="">Loading enrolled students...</option>
+          </select>
+
+          <label for="renewPlanSelect">Mess Plan</label>
+          <select id="renewPlanSelect">
+            <option value="PLAN-VEG">Standard Veg Plan (B:35, L:55, D:55)</option>
+            <option value="PLAN-NONVEG">Protein Non-Veg Plan (B:45, L:75, D:75)</option>
+            <option value="PLAN-PREMIUM">Executive Premium Plan (B:55, L:90, D:95)</option>
+          </select>
+
+          <div style="display: flex; gap: 8px;">
+            <div style="flex: 1;">
+              <label for="renewStartDateInput">New Start</label>
+              <input type="date" id="renewStartDateInput" required />
+            </div>
+            <div style="flex: 1;">
+              <label for="renewEndDateInput">New End</label>
+              <input type="date" id="renewEndDateInput" required />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 4px;">Renew / Extend Plan</button>
+        </form>
+      </section>
     </div>
 
     <!-- Month-End Settlement & Students Roster -->
@@ -165,10 +197,10 @@
           <table>
             <thead>
               <tr>
-                <th>Payout ID</th>
+                <th>Settlement ID</th>
                 <th>Student</th>
                 <th>Amount</th>
-                <th>Status</th>
+                <th>Method / Status</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -197,17 +229,6 @@
         </div>
       </section>
     </div>
-
-    <!-- Audit Log -->
-    <section class="card">
-      <div class="card-header">
-        <div>
-          <h2 class="card-title">Audit Log</h2>
-          <p class="card-subtitle">Every action logged with UTC and IST timestamps</p>
-        </div>
-      </div>
-      <pre id="auditLogPre" style="background: var(--bg-subtle); padding: 14px; border-radius: 10px; font-family: var(--font-mono); font-size: 0.77rem; max-height: 260px; overflow-y: auto; white-space: pre-wrap;"></pre>
-    </section>
   </main>
 
   <script>
@@ -269,28 +290,35 @@
       } catch (_) { showAdminBanner('adminAlertError', 'Failed to mark payout paid.'); }
     }
 
+    window.decideRequest = decideRequest;
+    window.markPayoutPaid = markPayoutPaid;
+
     async function advanceClock(hours, days) {
-      const res = await fetch('/api/admin/demo/clock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
-        body: JSON.stringify({ action: 'ADVANCE', hours, days })
-      });
-      const data = await res.json();
-      if (data.ok) { showAdminBanner('adminAlertSuccess', data.message); await pollAdminData(); }
+      try {
+        const res = await fetch('/api/admin/demo/clock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
+          body: JSON.stringify({ action: 'ADVANCE', hours, days })
+        });
+        const data = await res.json();
+        if (data.ok) { showAdminBanner('adminAlertSuccess', data.message); await pollAdminData(); }
+        else { showAdminBanner('adminAlertError', data.error || 'Failed to advance clock.'); }
+      } catch (_) { showAdminBanner('adminAlertError', 'Failed to reach server.'); }
     }
 
     async function setSystemClock() {
-      const res = await fetch('/api/admin/demo/clock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
-        body: JSON.stringify({ action: 'SET_MODE', demoMode: false })
-      });
-      const data = await res.json();
-      if (data.ok) { showAdminBanner('adminAlertSuccess', data.message); await pollAdminData(); }
+      try {
+        const res = await fetch('/api/admin/demo/clock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
+          body: JSON.stringify({ action: 'SET_MODE', demoMode: false })
+        });
+        const data = await res.json();
+        if (data.ok) { showAdminBanner('adminAlertSuccess', data.message); await pollAdminData(); }
+        else { showAdminBanner('adminAlertError', data.error || 'Failed to reset to real time.'); }
+      } catch (_) { showAdminBanner('adminAlertError', 'Failed to reach server.'); }
     }
 
-    window.decideRequest = decideRequest;
-    window.markPayoutPaid = markPayoutPaid;
     window.advanceClock = advanceClock;
     window.setSystemClock = setSystemClock;
 
@@ -298,20 +326,16 @@
       e.preventDefault();
       const istDateTime = document.getElementById('customIstDateTime').value;
       if (!istDateTime) return;
-      const res = await fetch('/api/admin/demo/clock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
-        body: JSON.stringify({ action: 'SET_MODE', demoMode: true, istDateTime })
-      });
-      const data = await res.json();
-      if (data.ok) { showAdminBanner('adminAlertSuccess', data.message); await pollAdminData(); }
-    });
-
-    document.getElementById('resetDemoBtn').addEventListener('click', async () => {
-      if (!confirm('Reset all data back to the demo seed state?')) return;
-      const res = await fetch('/api/admin/demo/reset', { method: 'POST', headers: { 'X-Session-Token': token } });
-      const data = await res.json();
-      if (data.ok) { showAdminBanner('adminAlertSuccess', data.message); await pollAdminData(); }
+      try {
+        const res = await fetch('/api/admin/demo/clock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
+          body: JSON.stringify({ action: 'SET_MODE', demoMode: true, istDateTime })
+        });
+        const data = await res.json();
+        if (data.ok) { showAdminBanner('adminAlertSuccess', data.message); await pollAdminData(); }
+        else { showAdminBanner('adminAlertError', data.error || 'Failed to set clock.'); }
+      } catch (_) { showAdminBanner('adminAlertError', 'Failed to reach server.'); }
     });
 
     document.getElementById('createStudentForm').addEventListener('submit', async (e) => {
@@ -334,24 +358,6 @@
       credBox.classList.add('show');
       document.getElementById('newStuUsername').value = '';
       document.getElementById('newStuFullName').value = '';
-      await pollAdminData();
-    });
-
-    document.getElementById('attendanceForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const payload = {
-        studentId: document.getElementById('attStudentSelect').value,
-        mealDate: document.getElementById('attDateInput').value,
-        mealType: document.getElementById('attMealSelect').value
-      };
-      const res = await fetch('/api/admin/attendance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (!res.ok || !data.ok) { showAdminBanner('adminAlertError', data.error); return; }
-      showAdminBanner('adminAlertSuccess', data.message);
       await pollAdminData();
     });
 
@@ -387,36 +393,89 @@
 
     document.getElementById('forecastDateInput').addEventListener('change', () => pollAdminData());
 
+    document.getElementById('renewStudentSelect').addEventListener('change', (e) => {
+      const opt = e.target.selectedOptions[0];
+      if (!opt || !opt.dataset.end) return;
+      const endStr = opt.dataset.end;
+      const curPlan = opt.dataset.plan;
+      if (curPlan) document.getElementById('renewPlanSelect').value = curPlan;
+
+      // Next day after current end
+      const parts = endStr.split('-').map(Number);
+      const d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+      d.setUTCDate(d.getUTCDate() + 1);
+      const startIso = d.toISOString().split('T')[0];
+
+      // 30 days later
+      const dEnd = new Date(d);
+      dEnd.setUTCDate(dEnd.getUTCDate() + 30);
+      const endIso = dEnd.toISOString().split('T')[0];
+
+      document.getElementById('renewStartDateInput').value = startIso;
+      document.getElementById('renewEndDateInput').value = endIso;
+    });
+
+    document.getElementById('renewSubscriptionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const stuId = document.getElementById('renewStudentSelect').value;
+      if (!stuId) {
+        showAdminBanner('adminAlertError', 'Please select a student to renew.');
+        return;
+      }
+      const payload = {
+        studentId: stuId,
+        planId: document.getElementById('renewPlanSelect').value,
+        startDate: document.getElementById('renewStartDateInput').value,
+        endDate: document.getElementById('renewEndDateInput').value
+      };
+      const res = await fetch('/api/admin/subscriptions/renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        showAdminBanner('adminAlertError', data.error || 'Failed to renew plan.');
+        return;
+      }
+      showAdminBanner('adminAlertSuccess', data.message || 'Subscription renewed successfully.');
+      await pollAdminData();
+    });
+
     async function pollAdminData() {
       try {
         const forecastDateParam = document.getElementById('forecastDateInput').value || '';
-        const [skipsRes, forecastRes, auditRes] = await Promise.all([
+        const [skipsRes, forecastRes] = await Promise.all([
           fetch('/api/admin/skips?status=pending', { headers: { 'X-Session-Token': token } }),
-          fetch('/api/admin/forecast?date=' + encodeURIComponent(forecastDateParam), { headers: { 'X-Session-Token': token } }),
-          fetch('/api/admin/audit', { headers: { 'X-Session-Token': token } })
+          fetch('/api/admin/forecast?date=' + encodeURIComponent(forecastDateParam), { headers: { 'X-Session-Token': token } })
         ]);
 
         if (skipsRes.status === 401) { window.location.href = '/'; return; }
 
         const skipsData    = await skipsRes.json();
         const forecastData = await forecastRes.json();
-        const auditData    = await auditRes.json();
         if (!skipsData.ok) return;
 
         document.getElementById('pollStatusText').textContent = 'Updated just now';
         const clk = skipsData.clock;
-        document.getElementById('demoClockCurrentDisplay').textContent = `${clk.nowIstPretty} (${clk.modeName})`;
-        document.getElementById('clockModeBadge').textContent = clk.modeName;
 
-        const banner = document.getElementById('demoBanner');
-        if (clk.demoMode) { banner.classList.add('active'); document.getElementById('demoBannerTime').textContent = clk.nowIstPretty; }
-        else banner.classList.remove('active');
+        if (document.getElementById('adminClockText')) {
+          document.getElementById('adminClockText').textContent = clk.nowIstPretty;
+        }
+        if (document.getElementById('demoClockCurrentDisplay')) {
+          document.getElementById('demoClockCurrentDisplay').textContent = `${clk.nowIstPretty} (${clk.modeName})`;
+        }
+        if (document.getElementById('clockModeBadge')) {
+          document.getElementById('clockModeBadge').textContent = clk.modeName;
+          document.getElementById('clockModeBadge').className = clk.demoMode ? 'badge badge-amber' : 'badge badge-info';
+        }
 
         if (!datesInitialized) {
-          document.getElementById('forecastDateInput').value = clk.tomorrowIstDate;
-          document.getElementById('attDateInput').value      = clk.todayIstDate;
-          document.getElementById('closureDateInput').value  = clk.tomorrowIstDate;
-          document.getElementById('customIstDateTime').value = clk.nowIstInputLocal;
+          document.getElementById('forecastDateInput').value = clk.todayIstDate;
+          document.getElementById('closureDateInput').value  = clk.todayIstDate;
+          if (document.getElementById('customIstDateTime')) {
+            document.getElementById('customIstDateTime').value = clk.nowIstInputLocal;
+          }
           datesInitialized = true;
         }
 
@@ -454,16 +513,19 @@
           qBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No pending requests.</td></tr>';
         } else {
           qBody.innerHTML = pendingList.map(r => {
-            const sv = r.suggested || { verdict: 'APPROVE', reasons: [] };
-            // Build factual check badges from the reasons array
-            const cutoffOk  = sv.reasons.some(rs => rs.toLowerCase().includes('before') || rs.toLowerCase().includes('cutoff') && !rs.toLowerCase().includes('missed') && !rs.toLowerCase().includes('late'));
-            const seenAtCtr = sv.reasons.some(rs => rs.toLowerCase().includes('counter'));
-            const lateSubmit = sv.reasons.some(rs => rs.toLowerCase().includes('late') || rs.toLowerCase().includes('after') || rs.toLowerCase().includes('missed cutoff'));
+            const sv = r.suggested || {};
+            const beforeCutoff = (typeof sv.beforeCutoff === 'boolean') ? sv.beforeCutoff : true;
+            const seenAtCtr    = (sv.seenAtCounter === true);
 
             let checksHtml = '';
-            if (lateSubmit) checksHtml += `<span class="badge badge-rejected" style="margin-bottom:3px;">&#9888; Submitted after cutoff</span><br/>`;
-            else checksHtml += `<span class="badge badge-approved" style="margin-bottom:3px;">&#10003; Submitted before cutoff</span><br/>`;
-            if (seenAtCtr) checksHtml += `<span class="badge badge-rejected" style="margin-bottom:3px;">&#9888; Seen at counter</span>`;
+            if (beforeCutoff) {
+              checksHtml += `<span class="badge badge-approved" style="margin-bottom:3px;">&#10003; Submitted before cutoff</span><br/>`;
+            } else {
+              checksHtml += `<span class="badge badge-rejected" style="margin-bottom:3px;">&#9888; Submitted after cutoff</span><br/>`;
+            }
+            if (seenAtCtr) {
+              checksHtml += `<span class="badge badge-rejected" style="margin-bottom:3px;">&#9888; Seen at counter</span>`;
+            }
 
             return `
               <tr>
@@ -483,27 +545,69 @@
           }).join('');
         }
 
-        // Students roster + attendance select
+        // Students roster & Renew Select
         const students = skipsData.students || [];
-        const attSelect = document.getElementById('attStudentSelect');
-        const prevSelectedStu = attSelect.value;
-        attSelect.innerHTML = students.map(s => `<option value="${s.id}">${s.fullName} (${s.username} - ${s.roomNumber})</option>`).join('');
-        if (prevSelectedStu && students.some(s => s.id === prevSelectedStu)) attSelect.value = prevSelectedStu;
+        const renewSel = document.getElementById('renewStudentSelect');
+        if (renewSel && students.length > 0) {
+          const curVal = renewSel.value;
+          renewSel.innerHTML = '<option value="">-- Choose student to renew --</option>' + students.map(s => `
+            <option value="${s.id}" data-plan="${s.planId}" data-end="${s.endDate}">
+              ${s.fullName} (${s.username}) — Plan: ${s.planId} (Ends: ${s.endDate})
+            </option>
+          `).join('');
+          if (curVal) renewSel.value = curVal;
+        }
 
         document.getElementById('studentsRosterTableBody').innerHTML = students.map(s => `
           <tr>
             <td class="mono">${s.id} (${s.username})</td>
             <td><strong>${s.fullName}</strong> &bull; ${s.roomNumber}</td>
             <td>${s.planId}<br/><small style="color:var(--text-muted);">Ends ${s.endDate}</small></td>
-            <td class="mono" style="font-weight:700; color:var(--primary);">${s.balanceFormatted}</td>
+            <td class="mono" style="font-weight:700; color:var(--primary);">
+              ${s.balanceFormatted}
+              ${s.carryForwardPaise > 0 ? `<br/><small style="color:var(--text-muted); font-size:0.75rem;">+${s.carryForwardFormatted} carried forward</small>` : ''}
+            </td>
             <td><span class="badge ${s.settlementChoice === 'REFUND' ? 'badge-amber' : 'badge-info'}">${s.settlementChoice}</span></td>
           </tr>`).join('');
 
-        // Payouts
-        const payouts = skipsData.payouts || [];
-        const pBody = document.getElementById('payoutsTableBody');
-        if (payouts.length === 0) {
-          pBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No payouts yet. Run Month-End Settlement to generate.</td></tr>';
+        // Month-End Settlements & Payouts
+        const settlements = skipsData.settlements || [];
+        const payouts     = skipsData.payouts || [];
+        const pBody       = document.getElementById('payoutsTableBody');
+
+        if (settlements.length === 0 && payouts.length === 0) {
+          pBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No settlements yet. Run Month-End Settlement to process active balances.</td></tr>';
+        } else if (settlements.length > 0) {
+          const payMap = {};
+          payouts.forEach(p => { payMap[p.id] = p; });
+
+          pBody.innerHTML = settlements.map(s => {
+            const isRefund = (s.choice === 'REFUND');
+            const p = s.payoutId ? payMap[s.payoutId] : null;
+            const isPaid = p ? p.paidOffline : false;
+
+            let badgeHtml = isRefund
+              ? `<span class="badge ${isPaid ? 'badge-approved' : 'badge-amber'}">${isPaid ? 'PAID OFFLINE' : 'PENDING CASH REFUND'}</span>`
+              : `<span class="badge badge-info">CARRIED FORWARD</span>`;
+
+            let actionHtml = '-';
+            if (isRefund && p) {
+              actionHtml = isPaid
+                ? `<small style="color:var(--text-muted);">Paid ${p.paidAtIst}</small>`
+                : `<button class="btn btn-primary btn-sm" onclick="markPayoutPaid('${p.id}')">Mark Paid</button>`;
+            } else if (!isRefund) {
+              actionHtml = `<small style="color:var(--text-muted);">Applied to Next Bill</small>`;
+            }
+
+            return `
+              <tr>
+                <td class="mono">${s.id}${s.payoutId ? `<br/><small class="mono" style="color:var(--text-muted);">${s.payoutId}</small>` : ''}</td>
+                <td>${s.studentName || s.studentId}</td>
+                <td class="mono" style="font-weight:700; color:var(--primary);">${s.amountFormatted}</td>
+                <td>${badgeHtml}</td>
+                <td>${actionHtml}</td>
+              </tr>`;
+          }).join('');
         } else {
           pBody.innerHTML = payouts.map(p => `
             <tr>
@@ -516,11 +620,6 @@
                 : `<button class="btn btn-primary btn-sm" onclick="markPayoutPaid('${p.id}')">Mark Paid</button>`}
               </td>
             </tr>`).join('');
-        }
-
-        // Audit log
-        if (auditData.ok && auditData.lines) {
-          document.getElementById('auditLogPre').textContent = auditData.lines.join('\n') || 'No entries yet.';
         }
       } catch (_) {}
     }

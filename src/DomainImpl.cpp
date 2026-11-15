@@ -64,7 +64,7 @@ void IdGenerator::resetAll() {
     nextNotifSeq_ = 0;
 }
 
-int Config::cutoffHoursBeforeMeal_     = 6;
+int Config::cutoffHoursBeforeMeal_     = 2;
 int Config::monthlySkipCap_            = 10;
 int Config::refundPercent_             = 80;
 std::string Config::refundPolicyType_  = "PERCENT"; // "PERCENT" (80%) or "FULL" (100%)

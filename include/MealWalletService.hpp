@@ -162,6 +162,13 @@ public:
                                      const Date& cycleEnd,
                                      const std::string& customInitialPassword = "");
 
+    // Admin: Renew or Extend Student Plan without modifying credentials or history
+    Subscription renewStudentSubscription(const std::string& studentId,
+                                          const std::string& planId,
+                                          const Date& cycleStart,
+                                          const Date& cycleEnd,
+                                          const std::string& adminUsername);
+
     // Student: Skip Request Flow (Single & Multi-Day)
     SingleSkipRequest submitSingleSkip(const std::string& studentId,
                                        const Date& mealDate,

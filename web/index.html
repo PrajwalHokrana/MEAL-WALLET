@@ -7,10 +7,6 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div id="demoBanner" class="demo-banner">
-    <span>&#9200; DEMO CLOCK ACTIVE: <strong id="demoBannerTime"></strong> — All meal cutoffs follow simulated time.</span>
-  </div>
-
   <header class="topbar">
     <a href="/" class="brand">
       <span class="brand-badge">MW</span>
@@ -41,8 +37,8 @@
 
         <div class="feature-pill-list">
           <div class="feature-pill-item">
-            <strong>6-Hour Cutoff Window</strong><br/>
-            <span style="opacity: 0.85; font-size: 0.83rem;">Submit your skip at least 6 hours before the meal. Live countdown on every meal card.</span>
+            <strong>Advance Cutoff Window</strong><br/>
+            <span style="opacity: 0.85; font-size: 0.83rem;">Submit your skip request before the cutoff to help the kitchen avoid food waste.</span>
           </div>
           <div class="feature-pill-item">
             <strong>Admin Approval with Counter Verification</strong><br/>
@@ -125,20 +121,25 @@
       document.getElementById('loginSuccess').classList.remove('show');
     }
 
+    function resolveRoute(route, role) {
+      if (route) {
+        if (route === '/mess') return '/mess.html';
+        if (route === '/student') return '/student.html';
+        if (route === '/admin') return '/admin.html';
+        return route;
+      }
+      if (role === 'STUDENT') return '/student.html';
+      if (role === 'MESS_STAFF') return '/mess.html';
+      return '/admin.html';
+    }
+
     async function refreshClockChip() {
       try {
         const r = await fetch('/healthz');
         const data = await r.json();
         if (data.clock) {
           document.getElementById('clockChip').innerHTML =
-            `<span class="poll-dot"></span><span>${data.clock.nowIstPretty} (${data.clock.modeName})</span>`;
-          const banner = document.getElementById('demoBanner');
-          if (data.clock.demoMode) {
-            banner.classList.add('active');
-            document.getElementById('demoBannerTime').textContent = data.clock.nowIstPretty;
-          } else {
-            banner.classList.remove('active');
-          }
+            `<span class="poll-dot"></span><span>${data.clock.nowIstPretty}</span>`;
         }
       } catch (_) {}
     }
@@ -166,12 +167,12 @@
         localStorage.setItem('mw_username', data.username);
 
         if (data.mustChangePassword) {
-          pendingLoginState = { oldPassword: password, route: data.dashboardRoute, token: data.token };
+          pendingLoginState = { oldPassword: password, route: resolveRoute(data.dashboardRoute, data.role), token: data.token };
           document.getElementById('changePasswordPanel').style.display = 'block';
           showAlert('loginSuccess', 'Logged in. Please set your personal password below.');
           return;
         }
-        window.location.href = data.dashboardRoute || (data.role === 'STUDENT' ? '/student' : '/admin');
+        window.location.href = resolveRoute(data.dashboardRoute, data.role);
       } catch (err) {
         showAlert('loginError', 'Could not reach the server. Please make sure mealwallet.exe is running.');
       }
@@ -196,7 +197,7 @@
           showAlert('loginError', data.error || 'Could not update password');
           return;
         }
-        window.location.href = pendingLoginState.route || '/student';
+        window.location.href = pendingLoginState.route || '/student.html';
       } catch (err) {
         showAlert('loginError', 'Network error while updating password.');
       }

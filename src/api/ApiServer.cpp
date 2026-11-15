@@ -150,6 +150,22 @@ void ApiServer::stop() {
 
 void ApiServer::registerRoutes() {
     // Page routes
+    svr_.Get("/student", [this](const httplib::Request&, httplib::Response& res) {
+        std::string path = webRootDir_ + "/student.html";
+        std::ifstream f(path);
+        if (!f) { res.status = 404; res.set_content("Not found", "text/plain"); return; }
+        std::string body((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+        res.set_content(body, "text/html; charset=utf-8");
+    });
+
+    svr_.Get("/admin", [this](const httplib::Request&, httplib::Response& res) {
+        std::string path = webRootDir_ + "/admin.html";
+        std::ifstream f(path);
+        if (!f) { res.status = 404; res.set_content("Not found", "text/plain"); return; }
+        std::string body((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+        res.set_content(body, "text/html; charset=utf-8");
+    });
+
     svr_.Get("/mess", [this](const httplib::Request&, httplib::Response& res) {
         std::string path = webRootDir_ + "/mess.html";
         std::ifstream f(path);
@@ -273,6 +289,15 @@ void ApiServer::registerRoutes() {
             subJson["settlementChoice"] = toString(stu.subscription().settlementChoice());
             subJson["nextCyclePlanId"] = stu.subscription().nextCyclePlanId();
             subJson["carryForwardAppliedFormatted"] = stu.subscription().carryForwardCreditApplied().toRupeeString();
+
+            int64_t todayEpoch = TimeUtils::civilToEpochUtc(todayIst.year(), todayIst.month(), todayIst.day(), 0, 0, 0);
+            Date subEnd = stu.subscription().endDate();
+            int64_t endEpoch = TimeUtils::civilToEpochUtc(subEnd.year(), subEnd.month(), subEnd.day(), 0, 0, 0);
+            int daysRemaining = static_cast<int>((endEpoch - todayEpoch) / 86400LL);
+            subJson["daysRemaining"] = daysRemaining;
+            subJson["isExpiringSoon"] = (daysRemaining <= 2 && daysRemaining >= 0);
+            subJson["isExpired"] = (daysRemaining < 0);
+
             stuJson["subscription"] = subJson;
             out["student"] = stuJson;
 
@@ -558,6 +583,38 @@ void ApiServer::registerRoutes() {
         }
     });
 
+    svr_.Post("/api/admin/subscriptions/renew", [this, requireAdminOrStaff](const httplib::Request& req, httplib::Response& res) {
+        try {
+            requireAdminOrStaff(req);
+            json body = json::parse(req.body);
+            std::string studentId = body.value("studentId", "");
+            std::string planId    = body.value("planId", "PLAN-VEG");
+            std::string startStr  = body.value("startDate", "");
+            std::string endStr    = body.value("endDate", "");
+
+            if (studentId.empty() || startStr.empty() || endStr.empty()) {
+                sendError(res, 400, "Missing required fields (studentId, planId, startDate, endDate)", "VALIDATION_RULE");
+                return;
+            }
+
+            Date startDate = Date::parse(startStr);
+            Date endDate   = Date::parse(endStr);
+            auto renewedSub = service_.renewStudentSubscription(studentId, planId, startDate, endDate, "admin");
+
+            json out = json::object();
+            out["ok"] = true;
+            out["message"] = "Plan renewed successfully until " + endDate.toString();
+            out["startDate"] = renewedSub.startDate().toString();
+            out["endDate"] = renewedSub.endDate().toString();
+            out["planId"] = renewedSub.planId();
+            sendJson(res, 200, out);
+        } catch (const MealWalletException& ex) {
+            sendError(res, 400, ex.what(), ex.ruleName());
+        } catch (const std::exception& ex) {
+            sendError(res, 400, ex.what(), "VALIDATION_RULE");
+        }
+    });
+
     svr_.Get("/api/admin/skips", [this, requireAdminOrStaff](const httplib::Request& req, httplib::Response& res) {
         try {
             requireAdminOrStaff(req);
@@ -581,6 +638,8 @@ void ApiServer::registerRoutes() {
                 sj["settlementChoice"] = toString(stu.subscription().settlementChoice());
                 sj["balancePaise"] = stu.wallet().balance().paise();
                 sj["balanceFormatted"] = stu.wallet().balance().toRupeeString();
+                sj["carryForwardPaise"] = stu.subscription().carryForwardCreditApplied().paise();
+                sj["carryForwardFormatted"] = stu.subscription().carryForwardCreditApplied().toRupeeString();
                 stuArr.push_back(sj);
             }
 
@@ -605,12 +664,33 @@ void ApiServer::registerRoutes() {
                 payArr.push_back(pj);
             }
 
+            json setArr = json::array();
+            for (const auto& s : service_.listSettlements()) {
+                json sj = json::object();
+                sj["id"] = s.id;
+                sj["studentId"] = s.studentId;
+                try {
+                    Student st = service_.getStudentById(s.studentId);
+                    sj["studentName"] = st.fullName() + " (" + st.username() + ")";
+                } catch (...) {
+                    sj["studentName"] = s.studentId;
+                }
+                sj["yearMonth"] = s.yearMonth;
+                sj["choice"] = toString(s.choice);
+                sj["amountPaise"] = s.settledAmount.paise();
+                sj["amountFormatted"] = s.settledAmount.toRupeeString();
+                sj["payoutId"] = s.payoutId;
+                sj["settledAtIst"] = TimeUtils::formatIstPretty(s.settledAtUtc);
+                setArr.push_back(sj);
+            }
+
             json out = json::object();
             out["ok"] = true;
             out["clock"] = buildClockStateJson(service_);
             out["skips"] = arr;
             out["students"] = stuArr;
             out["payouts"] = payArr;
+            out["settlements"] = setArr;
             sendJson(res, 200, out);
         } catch (const MealWalletException& ex) {
             sendError(res, 401, ex.what(), ex.ruleName());

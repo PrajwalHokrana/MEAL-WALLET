@@ -8,11 +8,22 @@ echo   MEAL WALLET — Hostel Mess Refund System
 echo ====================================================================
 echo.
 
+if exist mealwallet_update.exe (
+    copy /y mealwallet_update.exe mealwallet.exe >nul 2>nul
+    if not errorlevel 1 del mealwallet_update.exe
+)
+
 if not exist mealwallet.exe (
-    echo [ERROR] mealwallet.exe not found in this folder.
-    echo         Please copy mealwallet.exe here and try again.
-    pause
-    exit /b 1
+    where g++ >nul 2>nul
+    if not errorlevel 1 (
+        echo mealwallet.exe not found. Compiling with MinGW g++ ...
+        g++ -std=c++17 -O2 -Wall -Wextra -Iinclude -Ithird_party src/main.cpp src/DomainImpl.cpp src/ConsoleAndTests.cpp src/repository/MealWalletService.cpp src/api/ApiServer.cpp -o mealwallet.exe -lws2_32
+    )
+    if not exist mealwallet.exe (
+        echo [ERROR] mealwallet.exe not found and could not be compiled.
+        pause
+        exit /b 1
+    )
 )
 
 echo Starting server...

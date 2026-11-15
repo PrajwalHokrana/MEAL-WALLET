@@ -426,6 +426,7 @@ label {
 .alert-error   { background: var(--danger-soft); color: var(--danger); border-left-color: var(--danger); }
 .alert-success { background: var(--success-soft); color: var(--success); border-left-color: var(--success); }
 .alert-info    { background: var(--info-soft); color: var(--info); border-left-color: var(--info); }
+.alert-warning { background: var(--accent-amber-soft); color: var(--accent-amber-dark); border-left-color: var(--accent-amber); }
 
 /* ── Pulse highlight on data refresh ── */
 @keyframes pulseHighlight {

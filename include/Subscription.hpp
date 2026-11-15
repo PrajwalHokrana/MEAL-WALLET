@@ -88,6 +88,14 @@ public:
         active_ = true;
     }
 
+    void renew(Date newStart, Date newEnd, std::string newPlanId, PlanVariant newVariant) {
+        startDate_ = newStart;
+        endDate_ = newEnd;
+        planId_ = std::move(newPlanId);
+        planVariant_ = newVariant;
+        active_ = true;
+    }
+
     bool coversDate(const Date& d) const noexcept {
         return active_ && d >= startDate_ && d <= endDate_;
     }

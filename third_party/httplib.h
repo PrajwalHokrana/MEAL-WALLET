@@ -347,6 +347,7 @@ private:
         else if (rel == "/login")   rel = "/index.html";
         else if (rel == "/student") rel = "/student.html";
         else if (rel == "/admin")   rel = "/admin.html";
+        else if (rel == "/mess")    rel = "/mess.html";
 
         // Prevent directory traversal
         if (rel.find("..") != std::string::npos) return false;

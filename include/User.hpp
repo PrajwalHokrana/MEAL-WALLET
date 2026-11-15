@@ -82,7 +82,7 @@ public:
           subscription_(std::move(sub)) {}
 
     UserRole role() const override { return UserRole::STUDENT; }
-    std::string dashboardRoute() const override { return "/student"; }
+    std::string dashboardRoute() const override { return "/student.html"; }
 
     const std::string& roomNumber() const noexcept { return roomNumber_; }
     Wallet& wallet() noexcept { return wallet_; }
@@ -113,7 +113,7 @@ public:
           title_(std::move(title)) {}
 
     UserRole role() const override { return UserRole::ADMIN; }
-    std::string dashboardRoute() const override { return "/admin"; }
+    std::string dashboardRoute() const override { return "/admin.html"; }
     const std::string& title() const noexcept { return title_; }
 };
 
@@ -137,7 +137,7 @@ public:
           shift_(std::move(shift)) {}
 
     UserRole role() const override { return UserRole::MESS_STAFF; }
-    std::string dashboardRoute() const override { return "/mess"; }
+    std::string dashboardRoute() const override { return "/mess.html"; }
     const std::string& shift() const noexcept { return shift_; }
 };
 

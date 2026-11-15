@@ -1,1 +1,1 @@
-﻿#MEALWALLET_V1|settlements
+#MEALWALLET_V1|settlements
