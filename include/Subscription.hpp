@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_SUBSCRIPTION_HPP
+﻿#ifndef MEALWALLET_SUBSCRIPTION_HPP
 #define MEALWALLET_SUBSCRIPTION_HPP
 
 #include "DateTime.hpp"
@@ -8,13 +8,7 @@
 
 namespace mealwallet {
 
-/**
- * [OOP Concept: Composition]
- * A Student HAS-A Subscription representing their active mess cycle, plan ID,
- * validity window, month-end settlement preference (default CARRY_FORWARD),
- * and any queued plan change for the next cycle (since plan changes apply from
- * the next cycle only).
- */
+
 class Subscription {
 private:
     std::string id_;

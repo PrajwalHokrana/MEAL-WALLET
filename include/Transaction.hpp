@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_TRANSACTION_HPP
+﻿#ifndef MEALWALLET_TRANSACTION_HPP
 #define MEALWALLET_TRANSACTION_HPP
 
 #include "Enums.hpp"
@@ -8,13 +8,7 @@
 
 namespace mealwallet {
 
-/**
- * [OOP Concept: Abstraction, Inheritance & Runtime Polymorphism]
- * Abstract Transaction base class for the append-only ledger.
- * Concrete subclasses CreditTxn, DebitTxn, and PayoutTxn override signedAmount()
- * so Wallet::balance() computes the derived balance purely by summing
- * txn->signedAmount() polymorphically across all ledger entries.
- */
+
 class Transaction {
 protected:
     std::string id_;
@@ -61,10 +55,7 @@ public:
                                                int64_t timestampUtc);
 };
 
-/**
- * [OOP Concept: Inheritance & Runtime Polymorphism]
- * Increases wallet balance (+amount) when a missed meal is approved or mess closes.
- */
+
 class CreditTxn : public Transaction {
 public:
     using Transaction::Transaction;
@@ -76,10 +67,7 @@ public:
     }
 };
 
-/**
- * [OOP Concept: Inheritance & Runtime Polymorphism]
- * Decreases wallet balance (-amount) for meal swaps or carry-forward plan deductions.
- */
+
 class DebitTxn : public Transaction {
 public:
     using Transaction::Transaction;
@@ -91,11 +79,7 @@ public:
     }
 };
 
-/**
- * [OOP Concept: Inheritance & Runtime Polymorphism]
- * Decreases wallet balance (-amount) when a month-end REFUND settlement is converted
- * into an offline payout record.
- */
+
 class PayoutTxn : public Transaction {
 public:
     using Transaction::Transaction;

@@ -1,6 +1,7 @@
 #include "ApiServer.hpp"
 #include "nlohmann/json.hpp"
 
+#include <fstream>
 #include <iostream>
 #include <sstream>
 
@@ -148,6 +149,15 @@ void ApiServer::stop() {
 }
 
 void ApiServer::registerRoutes() {
+    // Page routes
+    svr_.Get("/mess", [this](const httplib::Request&, httplib::Response& res) {
+        std::string path = webRootDir_ + "/mess.html";
+        std::ifstream f(path);
+        if (!f) { res.status = 404; res.set_content("Not found", "text/plain"); return; }
+        std::string body((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+        res.set_content(body, "text/html; charset=utf-8");
+    });
+
     // ------------------------------------------------------------------------
     // 1. Health Check: GET /healthz
     // ------------------------------------------------------------------------

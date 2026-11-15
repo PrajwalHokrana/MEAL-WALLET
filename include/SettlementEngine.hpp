@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_SETTLEMENT_ENGINE_HPP
+﻿#ifndef MEALWALLET_SETTLEMENT_ENGINE_HPP
 #define MEALWALLET_SETTLEMENT_ENGINE_HPP
 
 #include "Records.hpp"
@@ -7,13 +7,7 @@
 
 namespace mealwallet {
 
-/**
- * [OOP Concept: Friend Class]
- * SettlementEngine is declared a `friend class` inside Wallet so it can
- * atomically inspect raw ledger entries and append PayoutTxn or DebitTxn
- * entries during month-end settlement without exposing low-level ledger
- * manipulation to external code.
- */
+
 class SettlementEngine {
 public:
     struct Result {

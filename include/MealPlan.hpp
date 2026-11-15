@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_MEAL_PLAN_HPP
+﻿#ifndef MEALWALLET_MEAL_PLAN_HPP
 #define MEALWALLET_MEAL_PLAN_HPP
 
 #include "Enums.hpp"
@@ -8,13 +8,7 @@
 
 namespace mealwallet {
 
-/**
- * [OOP Concept: Abstraction & Runtime Polymorphism]
- * Abstract MealPlan defines pure virtual mealPrice(MealType) and variant().
- * Concrete subclasses (VegPlan, NonVegPlan, PremiumPlan) provide fixed per-meal
- * prices in integer paise. Polymorphic calls through MealPlan* compute refunds
- * and meal-swap price differences.
- */
+
 class MealPlan {
 protected:
     std::string id_;
@@ -58,10 +52,7 @@ public:
                                             Money b, Money l, Money d);
 };
 
-/**
- * [OOP Concept: Inheritance & Polymorphism]
- * Standard Vegetarian Mess Plan (e.g., Breakfast Rs.35, Lunch Rs.55, Dinner Rs.55)
- */
+
 class VegPlan : public MealPlan {
 public:
     VegPlan(std::string id = "PLAN-VEG",
@@ -87,10 +78,7 @@ public:
     }
 };
 
-/**
- * [OOP Concept: Inheritance & Polymorphism]
- * Non-Vegetarian Mess Plan (e.g., Breakfast Rs.45, Lunch Rs.75, Dinner Rs.75)
- */
+
 class NonVegPlan : public MealPlan {
 public:
     NonVegPlan(std::string id = "PLAN-NONVEG",
@@ -116,10 +104,7 @@ public:
     }
 };
 
-/**
- * [OOP Concept: Inheritance & Polymorphism]
- * Premium Special Mess Plan (e.g., Breakfast Rs.55, Lunch Rs.90, Dinner Rs.95)
- */
+
 class PremiumPlan : public MealPlan {
 public:
     PremiumPlan(std::string id = "PLAN-PREMIUM",

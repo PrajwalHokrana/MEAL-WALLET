@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_SERVICE_HPP
+﻿#ifndef MEALWALLET_SERVICE_HPP
 #define MEALWALLET_SERVICE_HPP
 
 #include "Compat.hpp"
@@ -56,13 +56,7 @@ struct PersistedTxnRow {
     int64_t timestampUtc = 0;
 };
 
-/**
- * [OOP Concept: Facade / Domain Service with Thread-Safe Write-Through Persistence]
- * Coordinates all domain objects, enforces every business rule, manages the active
- * polymorphic Clock and RefundPolicy, and wraps every state mutation in a single
- * global std::recursive_mutex with write-through file persistence and audit logging.
- * Contains ZERO HTTP, SQL, or JSON code — can be driven from a plain console main().
- */
+
 class MealWalletService {
 private:
     mutable compat::RecursiveMutex mutex_;

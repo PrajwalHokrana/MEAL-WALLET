@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_DATETIME_HPP
+﻿#ifndef MEALWALLET_DATETIME_HPP
 #define MEALWALLET_DATETIME_HPP
 
 #include "Enums.hpp"
@@ -13,11 +13,7 @@
 
 namespace mealwallet {
 
-/**
- * [OOP Concept: Operator Overloading & Calendar Boundary Math]
- * Represents a calendar date (YYYY-MM-DD) in Asia/Kolkata (IST) local mess time.
- * Supports leap-year aware day addition, month/year boundaries, and comparison operators.
- */
+
 class Date {
 private:
     int year_;
@@ -270,12 +266,7 @@ public:
     }
 };
 
-/**
- * [OOP Concept: Abstraction & Runtime Polymorphism (Clock Hierarchy)]
- * Abstract Clock interface ensures domain classes NEVER call std::time(nullptr)
- * directly. During a live presentation or unit test, the Admin switches the active
- * Clock pointer from SystemClock to DemoClock to simulate cutoffs and month-end.
- */
+
 class Clock {
 public:
     virtual ~Clock() = default;
@@ -284,10 +275,7 @@ public:
     virtual std::string modeName() const = 0;
 };
 
-/**
- * [OOP Concept: Inheritance & Polymorphism]
- * Production clock backed by the operating system's real-time UTC clock.
- */
+
 class SystemClock : public Clock {
 public:
     int64_t now() const override {
@@ -297,10 +285,7 @@ public:
     std::string modeName() const override { return "SYSTEM"; }
 };
 
-/**
- * [OOP Concept: Inheritance & Polymorphism]
- * Simulated clock controlled from the Admin Demo Mode panel or unit tests.
- */
+
 class DemoClock : public Clock {
 private:
     int64_t simulatedUtc_;

@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_ENUMS_HPP
+﻿#ifndef MEALWALLET_ENUMS_HPP
 #define MEALWALLET_ENUMS_HPP
 
 #include <string>
@@ -6,11 +6,7 @@
 
 namespace mealwallet {
 
-/**
- * [OOP Concept: Scoped Enumerations (enum class)]
- * Prevents implicit integer conversions and namespace pollution across
- * meal types, request states, transaction types, and user roles.
- */
+
 enum class MealType {
     BREAKFAST = 0,
     LUNCH = 1,

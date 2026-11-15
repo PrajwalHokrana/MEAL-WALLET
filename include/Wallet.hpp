@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_WALLET_HPP
+﻿#ifndef MEALWALLET_WALLET_HPP
 #define MEALWALLET_WALLET_HPP
 
 #include "Exceptions.hpp"
@@ -16,40 +16,16 @@ namespace mealwallet {
 
 class SettlementEngine; // Forward declaration for friend class
 
-/**
- * [OOP Concept: Encapsulation, Rule of Five, Function Overloading & Friend]
- * 1. Encapsulation: ledger_ is strictly private and holds polymorphic
- *    std::unique_ptr<Transaction> objects. There is NO stored balance variable;
- *    balance() is derived on the fly from the append-only ledger.
- *    Only credit() and debit() can append to ledger_.
- * 2. Rule of Five: Because Wallet owns deep polymorphic pointers
- *    (std::vector<std::unique_ptr<Transaction>>), the compiler-generated copy
- *    constructor would fail. We implement a deep-cloning Copy Constructor,
- *    Copy Assignment Operator, Move Constructor, Move Assignment Operator,
- *    and Destructor.
- * 3. Function Overloading: Three overloaded Wallet::credit(...) methods:
- *    - credit(Money amount, int64_t tsUtc)
- *    - credit(Money amount, const std::string& reason, int64_t tsUtc, const std::string& refId)
- *    - credit(const SingleSkipRequest& req, Money baseMealPrice, const RefundPolicy& policy, int64_t tsUtc)
- * 4. Friend: SettlementEngine and operator<< are declared as friends with clear viva justifications.
- */
+
 class Wallet {
 private:
     std::string studentId_;
     std::vector<std::unique_ptr<Transaction>> ledger_;
 
-    /**
-     * [OOP Concept: Friend Class Justification]
-     * SettlementEngine needs to inspect raw ledger history and record atomic
-     * month-end settlement payout/carry-forward entries during batch settlement
-     * without exposing mutable ledger internals to arbitrary callers.
-     */
+    
     friend class SettlementEngine;
 
-    /**
-     * [OOP Concept: Friend Operator<< Justification]
-     * Prints a formatted mini-statement of the wallet's private ledger to an ostream.
-     */
+    
     friend std::ostream& operator<<(std::ostream& os, const Wallet& w);
 
 public:

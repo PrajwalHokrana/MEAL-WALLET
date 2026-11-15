@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_EXCEPTIONS_HPP
+﻿#ifndef MEALWALLET_EXCEPTIONS_HPP
 #define MEALWALLET_EXCEPTIONS_HPP
 
 #include <stdexcept>
@@ -6,13 +6,7 @@
 
 namespace mealwallet {
 
-/**
- * [OOP Concept: Custom Exception Hierarchy & Polymorphic Catching]
- * Base class MealWalletException inherits from std::runtime_error so callers
- * can catch either specific business rule violations or the base class.
- * Every exception stores the violated rule name so the UI can explain
- * clearly which rule was broken.
- */
+
 class MealWalletException : public std::runtime_error {
 private:
     std::string ruleName_;

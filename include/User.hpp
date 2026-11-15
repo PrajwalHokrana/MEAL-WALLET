@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_USER_HPP
+﻿#ifndef MEALWALLET_USER_HPP
 #define MEALWALLET_USER_HPP
 
 #include "Enums.hpp"
@@ -8,11 +8,7 @@
 
 namespace mealwallet {
 
-/**
- * [OOP Concept: Abstraction & Inheritance Base Class]
- * Abstract User class encapsulates credentials (salted SHA-256 hash + salt),
- * forced password change on first login, and identity metadata.
- */
+
 class User {
 protected:
     std::string id_;
@@ -61,11 +57,7 @@ public:
     }
 };
 
-/**
- * [OOP Concept: Inheritance & Composition]
- * Student inherits from User (IS-A User) and contains a Wallet and a Subscription
- * by value (Student HAS-A Wallet and HAS-A Subscription).
- */
+
 class Student : public User {
 private:
     std::string roomNumber_;
@@ -101,11 +93,7 @@ public:
     void setSubscription(const Subscription& sub) { subscription_ = sub; }
 };
 
-/**
- * [OOP Concept: Inheritance]
- * Admin user who manages student accounts, reviews skip requests, marks closures,
- * runs month-end settlements, and marks offline payouts as paid.
- */
+
 class Admin : public User {
 private:
     std::string title_;
@@ -129,10 +117,7 @@ public:
     const std::string& title() const noexcept { return title_; }
 };
 
-/**
- * [OOP Concept: Inheritance]
- * MessStaff user who logs counter attendance and checks tomorrow's meal headcount.
- */
+
 class MessStaff : public User {
 private:
     std::string shift_;
@@ -152,7 +137,7 @@ public:
           shift_(std::move(shift)) {}
 
     UserRole role() const override { return UserRole::MESS_STAFF; }
-    std::string dashboardRoute() const override { return "/admin"; }
+    std::string dashboardRoute() const override { return "/mess"; }
     const std::string& shift() const noexcept { return shift_; }
 };
 

@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_CONFIG_HPP
+﻿#ifndef MEALWALLET_CONFIG_HPP
 #define MEALWALLET_CONFIG_HPP
 
 #include <atomic>
@@ -9,11 +9,7 @@
 
 namespace mealwallet {
 
-/**
- * [OOP Concept: Static Data Members & Static Member Functions]
- * IdGenerator uses static counters per entity prefix so every generated ID
- * across the process is deterministic, readable, and collision-free.
- */
+
 class IdGenerator {
 private:
     static int nextUserSeq_;
@@ -49,10 +45,7 @@ public:
     static void resetAll();
 };
 
-/**
- * [OOP Concept: Static Configuration Class]
- * Centralizes configurable business rules and runtime environment settings.
- */
+
 class Config {
 private:
     static int cutoffHoursBeforeMeal_;

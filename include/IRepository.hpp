@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_IREPOSITORY_HPP
+﻿#ifndef MEALWALLET_IREPOSITORY_HPP
 #define MEALWALLET_IREPOSITORY_HPP
 
 #include <algorithm>
@@ -40,13 +40,7 @@ inline std::string escapeField(const std::string& raw) {
     return out;
 }
 
-/**
- * [OOP Concept: Templates & Abstract Interface (IRepository<T>)]
- * Generic repository interface decoupling the domain service from how entities
- * of type T are persisted. At startup, Config::repositoryMode() selects
- * TextFileRepository<T>, BinaryFileRepository<T>, or InMemoryRepository<T>
- * with zero changes to domain code.
- */
+
 template <typename T>
 class IRepository {
 public:
@@ -59,10 +53,7 @@ public:
     virtual int lastCorruptedLinesSkipped() const = 0;
 };
 
-/**
- * [OOP Concept: Template Class Inheritance — InMemoryRepository<T>]
- * Stores records purely in a std::vector<T> in RAM for fast isolated unit tests.
- */
+
 template <typename T>
 class InMemoryRepository : public IRepository<T> {
 private:
@@ -76,14 +67,7 @@ public:
     int lastCorruptedLinesSkipped() const override { return 0; }
 };
 
-/**
- * [OOP Concept: Template Class Inheritance — TextFileRepository<T>]
- * Persists records as human-readable pipe-delimited text files with a version header
- * (e.g. "#MEALWALLET_V1|students").
- * - Rewritten files use atomic write-to-temp-then-rename (`<file>.tmp` -> `<file>`).
- * - Append-only files (such as `ledger.txt`) append with immediate `std::flush`.
- * - Corrupted lines on load are skipped and logged instead of crashing.
- */
+
 template <typename T>
 class TextFileRepository : public IRepository<T> {
 public:
@@ -204,12 +188,7 @@ public:
     }
 };
 
-/**
- * [OOP Concept: Template Class Inheritance — BinaryFileRepository<T>]
- * Persists length-prefixed binary records with a 16-byte magic header ("MWBIN_V1")
- * and an 8-byte checksum per record so corrupted trailing records from simulated
- * interrupted writes are detected and skipped cleanly.
- */
+
 template <typename T>
 class BinaryFileRepository : public IRepository<T> {
 public:

@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_MONEY_HPP
+﻿#ifndef MEALWALLET_MONEY_HPP
 #define MEALWALLET_MONEY_HPP
 
 #include <cstdint>
@@ -9,13 +9,7 @@
 
 namespace mealwallet {
 
-/**
- * [OOP Concept: Value Object, Encapsulation & Operator Overloading]
- * Money stores currency strictly as integer paise (1 INR = 100 paise).
- * Float/double are NEVER used for money to eliminate IEEE-754 rounding bugs.
- * Demonstrates operator overloading (+, -, +=, <, <=, >, >=, ==, !=) and
- * friend stream insertion operator<<.
- */
+
 class Money {
 private:
     int64_t paise_;
@@ -70,11 +64,7 @@ public:
     constexpr bool operator==(const Money& rhs) const noexcept { return paise_ == rhs.paise_; }
     constexpr bool operator!=(const Money& rhs) const noexcept { return paise_ != rhs.paise_; }
 
-    /**
-     * [OOP Concept: Friend Function Justification]
-     * operator<< takes std::ostream& as its left-hand operand, so it cannot be
-     * a member function of Money. Making it a friend lets it format paise_ directly.
-     */
+    
     friend std::ostream& operator<<(std::ostream& os, const Money& m) {
         os << m.toRupeeString(true);
         return os;

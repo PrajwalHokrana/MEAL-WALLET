@@ -1,4 +1,4 @@
-#ifndef MEALWALLET_REQUEST_HPP
+﻿#ifndef MEALWALLET_REQUEST_HPP
 #define MEALWALLET_REQUEST_HPP
 
 #include "DateTime.hpp"
@@ -14,14 +14,7 @@ struct MealSlotSpec {
     MealType mealType;
 };
 
-/**
- * [OOP Concept: Abstraction & Inheritance]
- * Abstract Request base class represents a student's missed-meal request.
- * SingleSkipRequest represents an individual (student, date, meal) slot stored in
- * skip_requests.txt. MultiDaySkipRequest represents a date-range submission that
- * expands into individual SingleSkipRequest slots so each meal slot is tracked,
- * verified against counter attendance, approved, and credited individually.
- */
+
 class Request {
 protected:
     std::string id_;
@@ -48,11 +41,7 @@ public:
     virtual std::vector<MealSlotSpec> expandSlots() const = 0;
 };
 
-/**
- * [OOP Concept: Inheritance]
- * Concrete single-meal skip request for a specific Date and MealType.
- * Supports one-time appeal if rejected.
- */
+
 class SingleSkipRequest : public Request {
 private:
     Date mealDate_;
@@ -123,12 +112,7 @@ public:
     }
 };
 
-/**
- * [OOP Concept: Inheritance & Polymorphism]
- * Represents a multi-day range skip request (e.g. going home for a weekend).
- * Calling expandSlots() polymorphically expands the range into individual
- * (Date, MealType) slots.
- */
+
 class MultiDaySkipRequest : public Request {
 private:
     Date startDate_;

@@ -100,13 +100,6 @@
         </form>
       </section>
 
-      <section class="card">
-        <div class="card-header">
-          <h2 class="card-title">Active Rules</h2>
-          <span class="badge badge-info" id="repoBackendBadge">TEXT</span>
-        </div>
-        <div id="adminRulesContent" style="font-size: 0.87rem; line-height: 1.6;"></div>
-      </section>
     </div>
 
     <!-- Operational Forms -->
@@ -132,29 +125,6 @@
           <button type="submit" class="btn btn-primary" style="width: 100%;">Create &amp; Generate Credentials</button>
         </form>
         <div id="generatedCredBox" class="alert alert-info" style="margin-top: 10px; margin-bottom: 0;"></div>
-      </section>
-
-      <!-- Counter Attendance -->
-      <section class="card">
-        <div class="card-header">
-          <h2 class="card-title">Counter Attendance Log</h2>
-        </div>
-        <p class="card-subtitle" style="margin-bottom: 10px;">
-          Mark a student seen eating at the counter. Any skip request for that meal will be flagged for review.
-        </p>
-        <form id="attendanceForm">
-          <label for="attStudentSelect">Student</label>
-          <select id="attStudentSelect" required></select>
-          <label for="attDateInput">Meal Date</label>
-          <input type="date" id="attDateInput" required />
-          <label for="attMealSelect">Meal</label>
-          <select id="attMealSelect">
-            <option value="BREAKFAST">BREAKFAST</option>
-            <option value="LUNCH" selected>LUNCH</option>
-            <option value="DINNER">DINNER</option>
-          </select>
-          <button type="submit" class="btn btn-outline" style="width: 100%;">Log Counter Presence</button>
-        </form>
       </section>
 
       <!-- Mess Closure -->
@@ -420,10 +390,9 @@
     async function pollAdminData() {
       try {
         const forecastDateParam = document.getElementById('forecastDateInput').value || '';
-        const [skipsRes, forecastRes, rulesRes, auditRes] = await Promise.all([
+        const [skipsRes, forecastRes, auditRes] = await Promise.all([
           fetch('/api/admin/skips?status=pending', { headers: { 'X-Session-Token': token } }),
           fetch('/api/admin/forecast?date=' + encodeURIComponent(forecastDateParam), { headers: { 'X-Session-Token': token } }),
-          fetch('/api/admin/rules', { headers: { 'X-Session-Token': token } }),
           fetch('/api/admin/audit', { headers: { 'X-Session-Token': token } })
         ]);
 
@@ -431,7 +400,6 @@
 
         const skipsData    = await skipsRes.json();
         const forecastData = await forecastRes.json();
-        const rulesData    = await rulesRes.json();
         const auditData    = await auditRes.json();
         if (!skipsData.ok) return;
 
@@ -548,19 +516,6 @@
                 : `<button class="btn btn-primary btn-sm" onclick="markPayoutPaid('${p.id}')">Mark Paid</button>`}
               </td>
             </tr>`).join('');
-        }
-
-        // Rules panel
-        if (rulesData.ok && rulesData.rules) {
-          const rl = rulesData.rules;
-          document.getElementById('repoBackendBadge').textContent = rl.repositoryBackend;
-          document.getElementById('adminRulesContent').innerHTML = `
-            <p style="margin-bottom:7px;"><strong>Cutoff:</strong> Skip must be submitted at least <strong>${rl.cutoffHours} hours</strong> before meal start (Breakfast 08:00, Lunch 12:30, Dinner 20:00 IST).</p>
-            <p style="margin-bottom:7px;"><strong>Refund Policy:</strong> ${rl.refundPolicyDescription}</p>
-            <p style="margin-bottom:7px;"><strong>Monthly Cap:</strong> Max <strong>${rl.monthlySkipCap} meals</strong> per student per month.</p>
-            <p style="margin-bottom:7px;"><strong>Fraud Check:</strong> ${rl.verificationExplanation}</p>
-            <p><strong>Month-End:</strong> ${rl.monthEndExplanation}</p>
-          `;
         }
 
         // Audit log

@@ -11,6 +11,7 @@ build/
 
 # Runtime state - these change every time the app runs
 data/sessions.txt
+data/*.tmp
 data/audit.log
 
 # VS Code local settings
