@@ -4,9 +4,7 @@
 
 ---
 
-## 0. Running Directly in VS Code on Windows (No Ubuntu / WSL / Bash Needed!)
-
-This project is pre-configured with `.vscode/tasks.json`, `.vscode/launch.json`, `.vscode/settings.json` (Code Runner support), `run_windows.bat`, and `run_windows.ps1` so you can build and run it natively on **Windows** inside **Visual Studio Code**:
+## 0. Running Directly in VS Code on Windows 
 
 ### Method 1: One-Click Run in VS Code (Fastest)
 1. Unzip `meal-wallet-vscode-windows.zip` and open the `meal-wallet-project` folder in **VS Code** (`File -> Open Folder...`).
