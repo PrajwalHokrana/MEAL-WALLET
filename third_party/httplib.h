@@ -161,6 +161,29 @@ public:
 #ifdef _WIN32
         WSADATA wsaData;
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) == 0) {
+            // Fast kernel routing probe via UDP socket (zero network traffic, zero DNS latency)
+            SOCKET s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            if (s != INVALID_SOCKET) {
+                sockaddr_in target{};
+                target.sin_family = AF_INET;
+                target.sin_port = htons(53);
+                target.sin_addr.s_addr = inet_addr("8.8.8.8");
+                if (connect(s, reinterpret_cast<sockaddr*>(&target), sizeof(target)) == 0) {
+                    sockaddr_in local{};
+                    int len = sizeof(local);
+                    if (getsockname(s, reinterpret_cast<sockaddr*>(&local), &len) == 0) {
+                        char* ipStr = inet_ntoa(local.sin_addr);
+                        closesocket(s);
+                        if (ipStr != nullptr) {
+                            std::string candidate(ipStr);
+                            if (!candidate.empty() && candidate != "127.0.0.1" && candidate != "0.0.0.0") {
+                                return candidate;
+                            }
+                        }
+                    }
+                }
+                closesocket(s);
+            }
             char host[256] = {0};
             if (gethostname(host, sizeof(host)) == 0) {
                 struct hostent* phe = gethostbyname(host);

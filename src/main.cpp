@@ -74,11 +74,13 @@ int main(int argc, char* argv[]) {
     std::cout << "                   utkarsh / student123\n";
     std::cout << "                   prajwal / student123\n";
     std::cout << "                   vikram  / firstlogin (must change on first login)\n";
-    std::cout << "========================================================================\n\n";
+    std::cout << "========================================================================\n\n" << std::flush;
 
     ApiServer server(service, "./web");
     if (!server.start("0.0.0.0", port)) {
-        std::cerr << "[ERROR] Failed to bind HTTP server on 0.0.0.0:" << port << "\n";
+        std::cerr << "\n[ERROR] Failed to bind HTTP server on port " << port << "!\n";
+        std::cerr << "Another instance of mealwallet.exe is already running, or port " << port << " is busy.\n";
+        std::cerr << "Close any other running command windows and try again.\n\n" << std::flush;
         return 1;
     }
     return 0;
