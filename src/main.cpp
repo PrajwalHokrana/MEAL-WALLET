@@ -68,12 +68,9 @@ int main(int argc, char* argv[]) {
     std::cout << "  LAN / Hotspot  : http://" << lanIp << ":" << port << "  <-- Open on 2nd device!\n";
     std::cout << "  Health Check   : http://localhost:" << port << "/healthz\n";
     std::cout << "------------------------------------------------------------------------\n";
-    std::cout << "  Admin login    : admin / " << Config::adminSeedPassword() << "\n";
-    std::cout << "  Students       : aakarsh / student123\n";
-    std::cout << "                   dhiman  / student123\n";
-    std::cout << "                   utkarsh / student123\n";
-    std::cout << "                   prajwal / student123\n";
-    std::cout << "                   vikram  / firstlogin (must change on first login)\n";
+    std::cout << "  Admin login    : admin / admin123\n";
+    std::cout << "  Mess Staff     : messstaff / staff123\n";
+    std::cout << "  Student Portal : bt25cse147 / student123\n";
     std::cout << "========================================================================\n\n" << std::flush;
 
     ApiServer server(service, "./web");

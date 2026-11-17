@@ -1,3 +1,7 @@
 #MEALWALLET_V1|notifications
-NTF-0001|USR-0003|Welcome to Meal Wallet|Your Standard Veg Plan is active. Approved missed meals credit 80% to your wallet.|0|1794812588
-NTF-0002|USR-0005|Plan Validity Ending Soon|Your Executive Premium Plan ends tomorrow. Your current choice is REFUND (Rs. 192.00).|0|1794812588
+NTF-0001|USR-0003|Account Created|Assigned Standard Veg Plan (2026-11-01 to 2026-11-30).|0|1794738092
+NTF-0002|USR-0003|Skip Approved & Credited (Rs. 44.00)|Your skip for DINNER on 2026-11-16 was approved. Credited Rs. 44.00 to your wallet.|0|1794721994
+NTF-0003|USR-0003|Skip Approved & Credited (Rs. 44.00)|Your skip for DINNER on 2026-11-15 was approved. Credited Rs. 44.00 to your wallet.|0|1794721995
+NTF-0004|USR-0003|Month-End Settlement (2026-11)|Month-end CARRY_FORWARD applied: Rs. 88.00 deducted from your next mess plan bill.|0|1794722005
+NTF-0005|USR-0003|Skip Request Rejected|Your skip for BREAKFAST on 2026-11-15 was rejected. Reason: Rejected by Admin review. (You may appeal once).|0|1794699300
+NTF-0006|USR-0003|Skip Approved & Credited (Rs. 44.00)|Your skip for LUNCH on 2026-11-15 was approved. Credited Rs. 44.00 to your wallet.|0|1794699300
