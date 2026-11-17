@@ -32,8 +32,7 @@ struct PersistedUserRow {
     std::string username;
     std::string fullName;
     std::string extraField; // roomNumber for Student, title/shift for Admin/Staff
-    std::string salt;
-    std::string passwordHash;
+    std::string password;
     bool mustChangePassword = true;
 };
 
@@ -114,18 +113,8 @@ public:
     explicit MealWalletService(std::string dataDir = Config::dataDir(),
                                std::string repoMode = Config::repositoryMode());
 
-    // Initialize: loads from disk if present; if empty/missing, seeds demo data automatically
-    void initialize(bool autoSeedIfEmpty = true);
-
-    // Seed & Reset (<2s restore for live two-laptop demo)
-    struct SeedCredential {
-        std::string role;
-        std::string username;
-        std::string password;
-        std::string fullName;
-        std::string planInfo;
-    };
-    std::vector<SeedCredential> resetAndSeedDemoData();
+    // Initialize: loads persisted state from disk; if brand-new empty directory, creates baseline plans and admin
+    void initialize();
 
     // Clock & Demo Mode controls
     int64_t nowUtc() const;

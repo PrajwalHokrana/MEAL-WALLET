@@ -14,8 +14,7 @@ protected:
     std::string id_;
     std::string username_;
     std::string fullName_;
-    std::string passwordSalt_;
-    std::string passwordHash_;
+    std::string password_;
     bool mustChangePassword_;
 
 public:
@@ -25,14 +24,12 @@ public:
     User(std::string id,
          std::string username,
          std::string fullName,
-         std::string passwordSalt,
-         std::string passwordHash,
+         std::string password,
          bool mustChangePassword)
         : id_(std::move(id)),
           username_(std::move(username)),
           fullName_(std::move(fullName)),
-          passwordSalt_(std::move(passwordSalt)),
-          passwordHash_(std::move(passwordHash)),
+          password_(std::move(password)),
           mustChangePassword_(mustChangePassword) {}
 
     virtual ~User() = default;
@@ -44,15 +41,15 @@ public:
     const std::string& id() const noexcept { return id_; }
     const std::string& username() const noexcept { return username_; }
     const std::string& fullName() const noexcept { return fullName_; }
-    const std::string& passwordSalt() const noexcept { return passwordSalt_; }
-    const std::string& passwordHash() const noexcept { return passwordHash_; }
+    const std::string& password() const noexcept { return password_; }
     bool mustChangePassword() const noexcept { return mustChangePassword_; }
 
-    void updatePasswordHash(const std::string& newSalt,
-                            const std::string& newHash,
-                            bool requireChange = false) {
-        passwordSalt_ = newSalt;
-        passwordHash_ = newHash;
+    bool checkPassword(const std::string& inputPassword) const noexcept {
+        return password_ == inputPassword;
+    }
+
+    void updatePassword(std::string newPassword, bool requireChange = false) {
+        password_ = std::move(newPassword);
         mustChangePassword_ = requireChange;
     }
 };
@@ -71,12 +68,11 @@ public:
             std::string username, // e.g., roll number
             std::string fullName,
             std::string roomNumber,
-            std::string passwordSalt,
-            std::string passwordHash,
+            std::string password,
             bool mustChangePassword,
             Subscription sub = Subscription())
         : User(id, std::move(username), std::move(fullName),
-               std::move(passwordSalt), std::move(passwordHash), mustChangePassword),
+               std::move(password), mustChangePassword),
           roomNumber_(std::move(roomNumber)),
           wallet_(id),
           subscription_(std::move(sub)) {}
@@ -104,12 +100,11 @@ public:
     Admin(std::string id,
           std::string username,
           std::string fullName,
-          std::string passwordSalt,
-          std::string passwordHash,
+          std::string password,
           bool mustChangePassword = false,
           std::string title = "Chief Mess Warden")
         : User(std::move(id), std::move(username), std::move(fullName),
-               std::move(passwordSalt), std::move(passwordHash), mustChangePassword),
+               std::move(password), mustChangePassword),
           title_(std::move(title)) {}
 
     UserRole role() const override { return UserRole::ADMIN; }
@@ -128,12 +123,11 @@ public:
     MessStaff(std::string id,
               std::string username,
               std::string fullName,
-              std::string passwordSalt,
-              std::string passwordHash,
+              std::string password,
               bool mustChangePassword = false,
               std::string shift = "ALL_MEALS")
         : User(std::move(id), std::move(username), std::move(fullName),
-               std::move(passwordSalt), std::move(passwordHash), mustChangePassword),
+               std::move(password), mustChangePassword),
           shift_(std::move(shift)) {}
 
     UserRole role() const override { return UserRole::MESS_STAFF; }

@@ -1,7 +1,7 @@
 # DEMO_SCRIPT.md — 7-Minute Two-Laptop Live Presentation Walkthrough
 
 **Setup Before Calling the Teacher Over (30 seconds):**
-- **Laptop A (Admin Screen):** Open the public URL (or `http://localhost:8080`), sign in as **`admin` / `admin123`**, and click **"Reset Demo Data"** in the top-right bar so the database starts from a known clean state. Keep the C++ terminal visible on half the screen so the teacher can watch live `[MEAL-WALLET EVENT]` log lines appear.
+- **Laptop A (Admin Screen):** Open the public URL (or `http://localhost:8080`), sign in as **`admin` / `admin123`**. Keep the C++ terminal visible on half the screen so the teacher can watch live `[MEAL-WALLET EVENT]` log lines appear.
 - **Laptop B (Student Screen):** Open the same URL on the login page (`/`).
 
 ---
@@ -54,20 +54,19 @@
 
 ## Minute 3:45 – 4:45 | Step 4: Counter Attendance Fraud Detection & One-Time Appeal
 1. **On Laptop A (Admin Console):**
-   - Look at the seeded pending request from **Sneha Joshi (`sneha`)** for today's `BREAKFAST`, or log a new counter attendance entry using **"2. Counter Attendance Log"**.
-   - Point out the red badge on Sneha's request:
+   - Use **"2. Counter Attendance Log"** to log counter attendance for `bt25cse147` on a meal they requested to skip.
+   - Point out the red badge on Prajwal's request:
      - `SUGGESTED: REJECT`
-     - `SUSPICIOUS: Student was logged eating at mess counter by messstaff at 8:15 AM`
-   - Click **Reject** on Sneha's request.
+     - `SUSPICIOUS: Student was logged eating at mess counter by messstaff`
+   - Click **Reject** on the suspicious request.
 2. **On Laptop B (Student Screen):**
-   - Log out and quick-login as **`sneha` / `student123`**.
    - In **My Skip Requests & One-Time Appeals**, click **"Appeal Once"**, enter `"My roommate used my ID card by mistake"`, and submit.
-   - **Expected Result:** Status changes to `APPEALED` and reappears in the Admin queue on Laptop A within 3 seconds. If Sneha rejected again, the `Appeal Once` button disappears (enforcing the single-appeal rule).
+   - **Expected Result:** Status changes to `APPEALED` and reappears in the Admin queue on Laptop A within 3 seconds. If rejected again, the `Appeal Once` button disappears (enforcing the single-appeal rule).
 
 ---
 
 ## Minute 4:45 – 5:45 | Step 5: Multi-Day Skip Expansion & Mess-Closed Auto-Credit
-1. **On Laptop B (Student Screen — signed in as `sneha` or `aarav`):**
+1. **On Laptop B (Student Screen — signed in as `bt25cse147`):**
    - In **Plan Ahead**, select **Multi-Day Leave Range**, pick a 2-day future range, keep Breakfast/Lunch/Dinner checked, enter `"Going home for weekend"`, and click **Submit Request**.
    - **Expected Result:** Banner confirms `MultiDaySkipRequest::expandSlots()` expanded the range into **6 individual meal slots**, each visible in the calendar and Admin queue.
 2. **On Laptop A (Admin Console):**
@@ -76,16 +75,16 @@
 
 ---
 
-## Minute 5:45 – 7:00 | Step 6: Month-End Settlement, Offline Payout, Audit Log & Role Swap
+## Minute 5:45 – 7:00 | Step 6: Month-End Settlement, Offline Payout, & Role Swap
 1. **On Laptop A (Admin Console):**
-   - In the **Enrolled Students** table, point out **Rohan Verma (`rohan`)** whose plan ends tomorrow and who selected `REFUND`, and **Aarav (`aarav`)** who kept the default `CARRY_FORWARD`.
+   - In the **Enrolled Students** table, point out `bt25cse147` who selected `REFUND` (or `CARRY_FORWARD`).
    - Click **"Run Month-End Settlement Now"** in the Settlement card.
    - **Expected Result:**
      - Students with `CARRY_FORWARD` have their wallet balance debited and applied as a discount on next month's cycle.
-     - Students with `REFUND` (`priya`, `rohan`) appear in the **Offline Payouts** table as `PENDING PAYOUT`.
-   - Click **"Mark Paid Offline"** next to Rohan's payout -> status updates to **`PAID OFFLINE`**.
+     - Students with `REFUND` appear in the **Offline Payouts** table as `PENDING PAYOUT`.
+   - Click **"Mark Paid Offline"** next to the payout -> status updates to **`PAID OFFLINE`**.
 2. **Inspect File Handling Live:**
-   - Scroll down on Laptop A to the **Human-Readable File Audit Log (`data/audit.log`)** panel (or open `data/ledger.txt` in the terminal) to show pipe-delimited records with integer paise and UTC/IST timestamps.
+   - Open `data/ledger.txt` or `data/students.txt` in the terminal to show pipe-delimited plaintext records with integer paise and UTC/IST timestamps.
 3. **Midway / Final Role Swap (15 seconds):**
-   - On **Laptop A**, click **Logout** and sign in as `rohan` (`student123`) to show his settled wallet statement (`PAYOUT` transaction) and notification.
+   - On **Laptop A**, click **Logout** and sign in as `bt25cse147` (`student123`) to show settled wallet statement (`PAYOUT` transaction) and notification.
    - On **Laptop B**, click **Logout** and sign in as `admin` (`admin123`) to show the updated Admin Console from the second machine.

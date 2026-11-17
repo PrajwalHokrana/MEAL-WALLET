@@ -8,22 +8,6 @@
 
 using namespace mealwallet;
 
-namespace {
-
-void printCredentialsTable(const std::vector<MealWalletService::SeedCredential>& creds) {
-    std::cout << "\n+--------------+--------------+--------------+----------------------------------+--------------------------------+\n";
-    std::cout << "| ROLE         | USERNAME     | PASSWORD     | FULL NAME                        | PLAN / NOTES                   |\n";
-    std::cout << "+--------------+--------------+--------------+----------------------------------+--------------------------------+\n";
-    for (const auto& c : creds) {
-        std::printf("| %-12s | %-12s | %-12s | %-32s | %-30s |\n",
-                    c.role.c_str(), c.username.c_str(), c.password.c_str(),
-                    c.fullName.c_str(), c.planInfo.c_str());
-    }
-    std::cout << "+--------------+--------------+--------------+----------------------------------+--------------------------------+\n\n";
-}
-
-} // anonymous namespace
-
 int main(int argc, char* argv[]) {
     Config::loadFromEnv();
 
@@ -35,13 +19,6 @@ int main(int argc, char* argv[]) {
         if (arg == "--console") {
             return runConsoleDemoFlow();
         }
-        if (arg == "--seed-demo") {
-            MealWalletService svc(Config::dataDir(), Config::repositoryMode());
-            auto creds = svc.resetAndSeedDemoData();
-            std::cout << "\n[MEAL WALLET] Demo data seeded into DATA_DIR='" << Config::dataDir() << "'\n";
-            printCredentialsTable(creds);
-            return 0;
-        }
         if (arg == "--port" && i + 1 < argc) {
             Config::setServerPort(std::stoi(argv[++i]));
         }
@@ -51,7 +28,7 @@ int main(int argc, char* argv[]) {
     }
 
     MealWalletService service(Config::dataDir(), Config::repositoryMode());
-    service.initialize(true);
+    service.initialize();
 
     int port = Config::serverPort();
     std::string lanIp = httplib::Server::detectLanIp();

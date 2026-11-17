@@ -22,14 +22,9 @@ int runConsoleDemoFlow() {
     std::string demoDir = "./data_console_demo";
     compat::removeDirectoryRecursive(demoDir);
     MealWalletService svc(demoDir, "TEXT");
-    auto creds = svc.resetAndSeedDemoData();
+    svc.initialize();
 
-    std::cout << "[Step 1] Seeded Accounts & Plans:\n";
-    for (const auto& c : creds) {
-        std::cout << "  - [" << c.role << "] username=" << c.username
-                  << " | password=" << c.password
-                  << " | " << c.fullName << " (" << c.planInfo << ")\n";
-    }
+    std::cout << "[Step 1] Initialized System with Default Admin & Baseline Plans.\n";
 
     // Activate DemoClock at 06:00 AM IST on 2026-11-13
     Date demoDate(2026, 11, 13);
@@ -256,27 +251,27 @@ int runAllAutomatedTests() {
         std::string testDir = "./data_edge_cases";
         compat::removeDirectoryRecursive(testDir);
         MealWalletService svc(testDir, "TEXT");
-        svc.resetAndSeedDemoData();
+        svc.initialize();
 
         Date baseDate(2026, 11, 13);
-        // Set DemoClock to 2026-11-13 06:00 AM IST
-        svc.setDemoMode(true, TimeUtils::istToEpochUtc(baseDate, 6, 0, 0));
+        // Set DemoClock to 2026-11-13 07:00 AM IST (Breakfast starts at 08:00 AM; 2h cutoff was 06:00 AM IST)
+        svc.setDemoMode(true, TimeUtils::istToEpochUtc(baseDate, 7, 0, 0));
 
         auto stuCreated = svc.createStudent("edgeuser", "Edge Case Student", "E-101",
                                             "PLAN-VEG", Date(2026, 11, 1), Date(2026, 11, 30), "pass123");
         std::string sid = stuCreated.student.id();
 
-        // Edge Case A: Skipping after cutoff (Breakfast on 2026-11-13 starts at 08:00 AM, cutoff was 02:00 AM)
+        // Edge Case A: Skipping after cutoff (Breakfast on 2026-11-13 starts at 08:00 AM, 2h cutoff was 06:00 AM)
         bool caughtCutoff = false;
         try {
             svc.submitSingleSkip(sid, baseDate, MealType::BREAKFAST, "Too late");
         } catch (const CutoffPassedException&) {
             caughtCutoff = true;
         }
-        assert(caughtCutoff && "Expected CutoffPassedException for Breakfast at 06:00 AM");
+        assert(caughtCutoff && "Expected CutoffPassedException for Breakfast at 07:00 AM");
 
-        // Edge Case B: Valid skip before cutoff, then same meal skipped twice
-        auto r1 = svc.submitSingleSkip(sid, baseDate, MealType::LUNCH, "Valid lunch skip at 06:00 AM");
+        // Edge Case B: Valid skip before cutoff (Lunch starts at 12:30 PM, cutoff is 10:30 AM), then same meal skipped twice
+        auto r1 = svc.submitSingleSkip(sid, baseDate, MealType::LUNCH, "Valid lunch skip at 07:00 AM");
         bool caughtDuplicate = false;
         try {
             svc.submitSingleSkip(sid, baseDate, MealType::LUNCH, "Duplicate lunch skip");

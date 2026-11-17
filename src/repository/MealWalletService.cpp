@@ -55,9 +55,9 @@ void MealWalletService::initRepositories() {
     compat::ensureDirectory(dataDir_);
 
     // 1. students.txt (stores all users: Student, Admin, MessStaff)
-    // Columns: id|role|username|fullName|extraField|salt|passwordHash|mustChangePassword
+    // Columns: id|role|username|fullName|extraField|password|mustChangePassword
     userRepo_ = makeRepository<PersistedUserRow>(
-        repoMode_, dataDir_ + "/students.txt", "students", 8,
+        repoMode_, dataDir_ + "/students.txt", "students", 7,
         [](const PersistedUserRow& u) {
             std::ostringstream oss;
             oss << escapeField(u.id) << "|"
@@ -65,8 +65,7 @@ void MealWalletService::initRepositories() {
                 << escapeField(u.username) << "|"
                 << escapeField(u.fullName) << "|"
                 << escapeField(u.extraField) << "|"
-                << escapeField(u.salt) << "|"
-                << escapeField(u.passwordHash) << "|"
+                << escapeField(u.password) << "|"
                 << (u.mustChangePassword ? "1" : "0");
             return oss.str();
         },
@@ -76,9 +75,8 @@ void MealWalletService::initRepositories() {
             u.username = c[2];
             u.fullName = c[3];
             u.extraField = c[4];
-            u.salt = c[5];
-            u.passwordHash = c[6];
-            u.mustChangePassword = (c[7] == "1" || c[7] == "true");
+            u.password = c[5];
+            u.mustChangePassword = (c[6] == "1" || c[6] == "true");
             return !u.id.empty() && !u.username.empty();
         });
 
@@ -433,21 +431,21 @@ void MealWalletService::saveUsersAndSubsUnlocked() {
         const auto& adm = kv.second;
         uRows.push_back(PersistedUserRow{
             adm.id(), UserRole::ADMIN, adm.username(), adm.fullName(),
-            adm.title(), adm.passwordSalt(), adm.passwordHash(), adm.mustChangePassword()
+            adm.title(), adm.password(), adm.mustChangePassword()
         });
     }
     for (const auto& kv : staff_) {
         const auto& stf = kv.second;
         uRows.push_back(PersistedUserRow{
             stf.id(), UserRole::MESS_STAFF, stf.username(), stf.fullName(),
-            stf.shift(), stf.passwordSalt(), stf.passwordHash(), stf.mustChangePassword()
+            stf.shift(), stf.password(), stf.mustChangePassword()
         });
     }
     for (const auto& kv : students_) {
         const auto& stu = kv.second;
         uRows.push_back(PersistedUserRow{
             stu.id(), UserRole::STUDENT, stu.username(), stu.fullName(),
-            stu.roomNumber(), stu.passwordSalt(), stu.passwordHash(), stu.mustChangePassword()
+            stu.roomNumber(), stu.password(), stu.mustChangePassword()
         });
         sRows.push_back(stu.subscription());
     }
@@ -455,7 +453,7 @@ void MealWalletService::saveUsersAndSubsUnlocked() {
     subRepo_->saveAll(sRows);
 }
 
-void MealWalletService::initialize(bool autoSeedIfEmpty) {
+void MealWalletService::initialize() {
     compat::LockGuard lock(mutex_);
     compat::ensureDirectory(dataDir_);
     loadConfigUnlocked();
@@ -463,16 +461,30 @@ void MealWalletService::initialize(bool autoSeedIfEmpty) {
     auto planRows = planRepo_->loadAll();
     auto userRows = userRepo_->loadAll();
 
-    if (userRows.empty() || planRows.empty()) {
-        if (autoSeedIfEmpty) {
-            resetAndSeedDemoData();
+    // If plans.txt is completely missing/empty, initialize the 3 baseline meal plans
+    if (planRows.empty()) {
+        plans_["PLAN-VEG"]     = std::make_unique<VegPlan>("PLAN-VEG", "Standard Veg Plan",
+                                                           Money::fromRupees(35), Money::fromRupees(55), Money::fromRupees(55));
+        plans_["PLAN-NONVEG"]  = std::make_unique<NonVegPlan>("PLAN-NONVEG", "Protein Non-Veg Plan",
+                                                              Money::fromRupees(45), Money::fromRupees(75), Money::fromRupees(75));
+        plans_["PLAN-PREMIUM"] = std::make_unique<PremiumPlan>("PLAN-PREMIUM", "Executive Premium Plan",
+                                                               Money::fromRupees(55), Money::fromRupees(90), Money::fromRupees(95));
+        std::vector<PersistedPlanRow> initPlanRows;
+        for (const auto& kv : plans_) {
+            const auto& p = kv.second;
+            initPlanRows.push_back(PersistedPlanRow{
+                p->id(), p->variant(), p->displayName(),
+                p->mealPrice(MealType::BREAKFAST),
+                p->mealPrice(MealType::LUNCH),
+                p->mealPrice(MealType::DINNER)
+            });
         }
-        return;
-    }
-
-    plans_.clear();
-    for (const auto& pr : planRows) {
-        plans_[pr.id] = MealPlan::create(pr.id, pr.variant, pr.name, pr.breakfast, pr.lunch, pr.dinner);
+        planRepo_->saveAll(initPlanRows);
+    } else {
+        plans_.clear();
+        for (const auto& pr : planRows) {
+            plans_[pr.id] = MealPlan::create(pr.id, pr.variant, pr.name, pr.breakfast, pr.lunch, pr.dinner);
+        }
     }
 
     auto subRows = subRepo_->loadAll();
@@ -485,15 +497,25 @@ void MealWalletService::initialize(bool autoSeedIfEmpty) {
     students_.clear();
     admins_.clear();
     staff_.clear();
-    for (const auto& u : userRows) {
-        IdGenerator::syncCounter("USR", IdGenerator::extractSeq(u.id));
-        if (u.role == UserRole::ADMIN) {
-            admins_[u.id] = Admin(u.id, u.username, u.fullName, u.salt, u.passwordHash, u.mustChangePassword, u.extraField);
-        } else if (u.role == UserRole::MESS_STAFF) {
-            staff_[u.id] = MessStaff(u.id, u.username, u.fullName, u.salt, u.passwordHash, u.mustChangePassword, u.extraField);
-        } else {
-            Subscription sub = subByStudent.count(u.id) ? subByStudent[u.id] : Subscription();
-            students_[u.id] = Student(u.id, u.username, u.fullName, u.extraField, u.salt, u.passwordHash, u.mustChangePassword, sub);
+
+    // If students.txt is completely missing/empty, create default Admin so login works
+    if (userRows.empty()) {
+        std::string admId = IdGenerator::nextUserId(); // USR-0001
+        admins_[admId] = Admin(admId, "admin", "Admin (Chief Warden)", Config::adminSeedPassword(), false, "Chief Mess Warden");
+        std::string stfId = IdGenerator::nextUserId(); // USR-0002
+        staff_[stfId] = MessStaff(stfId, "messstaff", "Mess Counter Staff", "staff123", false, "ALL_MEALS");
+        saveUsersAndSubsUnlocked();
+    } else {
+        for (const auto& u : userRows) {
+            IdGenerator::syncCounter("USR", IdGenerator::extractSeq(u.id));
+            if (u.role == UserRole::ADMIN) {
+                admins_[u.id] = Admin(u.id, u.username, u.fullName, u.password, u.mustChangePassword, u.extraField);
+            } else if (u.role == UserRole::MESS_STAFF) {
+                staff_[u.id] = MessStaff(u.id, u.username, u.fullName, u.password, u.mustChangePassword, u.extraField);
+            } else {
+                Subscription sub = subByStudent.count(u.id) ? subByStudent[u.id] : Subscription();
+                students_[u.id] = Student(u.id, u.username, u.fullName, u.extraField, u.password, u.mustChangePassword, sub);
+            }
         }
     }
 
@@ -543,211 +565,6 @@ void MealWalletService::initialize(bool autoSeedIfEmpty) {
     for (const auto& s : sessionRepo_->loadAll()) {
         sessions_[s.token] = s;
     }
-}
-
-std::vector<MealWalletService::SeedCredential> MealWalletService::resetAndSeedDemoData() {
-    compat::LockGuard lock(mutex_);
-    IdGenerator::resetAll();
-
-    plans_.clear();
-    students_.clear();
-    admins_.clear();
-    staff_.clear();
-    skipRequests_.clear();
-    ledgerRows_.clear();
-    settlements_.clear();
-    payouts_.clear();
-    closures_.clear();
-    attendance_.clear();
-    notifications_.clear();
-    sessions_.clear();
-
-    if (repoMode_ != "MEMORY") {
-        compat::ensureDirectory(dataDir_);
-        std::remove((dataDir_ + "/ledger.txt").c_str());
-        std::remove((dataDir_ + "/ledger.txt.bin").c_str());
-        std::remove((dataDir_ + "/audit.log").c_str());
-    }
-
-    // Default rules
-    Config::setCutoffHoursBeforeMeal(2);
-    Config::setMonthlySkipCap(10);
-    Config::setRefundPolicyType("PERCENT");
-    Config::setRefundPercent(80);
-    rebuildRefundPolicy();
-
-    // Set DemoClock to a predictable morning time (2026-11-13 06:00 AM IST)
-    // Breakfast is at 08:00 AM (cutoff 02:00 AM passed),
-    // Lunch is at 12:30 PM (cutoff 06:30 AM -> 30 minutes left!),
-    // Dinner is at 08:00 PM (cutoff 02:00 PM -> 8 hours left!).
-    Date todayIst = TimeUtils::currentIstDate(systemClock_->now());
-    demoClock_->setNow(TimeUtils::istToEpochUtc(todayIst, 6, 0, 0));
-    activeClock_ = Config::demoModeEnabled()
-                       ? static_cast<Clock*>(demoClock_.get())
-                       : static_cast<Clock*>(systemClock_.get());
-
-    // 1. Seed 3 MealPlans (Veg, Non-Veg, Premium)
-    plans_["PLAN-VEG"]     = std::make_unique<VegPlan>("PLAN-VEG", "Standard Veg Plan",
-                                                       Money::fromRupees(35), Money::fromRupees(55), Money::fromRupees(55));
-    plans_["PLAN-NONVEG"]  = std::make_unique<NonVegPlan>("PLAN-NONVEG", "Protein Non-Veg Plan",
-                                                          Money::fromRupees(45), Money::fromRupees(75), Money::fromRupees(75));
-    plans_["PLAN-PREMIUM"] = std::make_unique<PremiumPlan>("PLAN-PREMIUM", "Executive Premium Plan",
-                                                           Money::fromRupees(55), Money::fromRupees(90), Money::fromRupees(95));
-
-    std::vector<PersistedPlanRow> planRows;
-    for (const auto& kv : plans_) {
-        const auto& p = kv.second;
-        planRows.push_back(PersistedPlanRow{
-            p->id(), p->variant(), p->displayName(),
-            p->mealPrice(MealType::BREAKFAST),
-            p->mealPrice(MealType::LUNCH),
-            p->mealPrice(MealType::DINNER)
-        });
-    }
-    planRepo_->saveAll(planRows);
-
-    std::vector<SeedCredential> creds;
-
-    // 2. Seed 1 Admin
-    {
-        std::string admId = IdGenerator::nextUserId(); // USR-0001
-        std::string salt  = Crypto::generateSalt();
-        std::string pass  = Config::adminSeedPassword();
-        std::string hash  = Crypto::hashPassword(pass, salt);
-        admins_[admId] = Admin(admId, "admin", "Dr. Rajesh Sharma (Chief Warden)", salt, hash, false, "Chief Mess Warden");
-        creds.push_back({"ADMIN", "admin", pass, "Dr. Rajesh Sharma (Chief Warden)", "Full Admin Console"});
-    }
-
-    // 3. Seed 1 MessStaff
-    {
-        std::string stfId = IdGenerator::nextUserId(); // USR-0002
-        std::string salt  = Crypto::generateSalt();
-        std::string pass  = "staff123";
-        std::string hash  = Crypto::hashPassword(pass, salt);
-        staff_[stfId] = MessStaff(stfId, "messstaff", "Ramesh Kulkarni (Mess Counter)", salt, hash, false, "ALL_MEALS");
-        creds.push_back({"MESS_STAFF", "messstaff", pass, "Ramesh Kulkarni (Mess Counter)", "Counter Attendance & Forecast"});
-    }
-
-    // 4. Seed 5 Students with different plans (veg, non-veg, premium) and one near month-end
-    struct StuSeed {
-        std::string username;
-        std::string fullName;
-        std::string room;
-        std::string planId;
-        PlanVariant variant;
-        std::string password;
-        bool forcePasswordChange;
-        Date start;
-        Date end;
-        SettlementChoice choice;
-    };
-
-    Date cycleStart(todayIst.year(), todayIst.month(), 1);
-    Date cycleEnd(todayIst.year(), todayIst.month(), Date::daysInMonth(todayIst.year(), todayIst.month()));
-
-    std::vector<StuSeed> stuSeeds = {
-        {"aarav",   "Aarav Deshmukh",  "B-204", "PLAN-VEG",     PlanVariant::VEG,     "student123", false,
-         cycleStart, cycleEnd, SettlementChoice::CARRY_FORWARD},
-        {"priya",   "Priya Nair",      "A-112", "PLAN-NONVEG",  PlanVariant::NON_VEG, "student123", false,
-         cycleStart, cycleEnd, SettlementChoice::REFUND},
-        {"rohan",   "Rohan Verma",     "C-305", "PLAN-PREMIUM", PlanVariant::PREMIUM, "student123", false,
-         cycleStart, todayIst.addDays(1), SettlementChoice::REFUND}, // Near plan validity / month-end!
-        {"sneha",   "Sneha Joshi",     "A-208", "PLAN-VEG",     PlanVariant::VEG,     "student123", false,
-         cycleStart, cycleEnd, SettlementChoice::CARRY_FORWARD},
-        {"vikram",  "Vikram Patil",    "B-410", "PLAN-NONVEG",  PlanVariant::NON_VEG, "firstlogin", true,
-         cycleStart, cycleEnd, SettlementChoice::CARRY_FORWARD}  // Forces password change on first login!
-    };
-
-    std::vector<std::string> stuIds;
-    for (const auto& ss : stuSeeds) {
-        std::string uid  = IdGenerator::nextUserId();
-        std::string sid  = IdGenerator::nextSubId();
-        std::string salt = Crypto::generateSalt();
-        std::string hash = Crypto::hashPassword(ss.password, salt);
-        Subscription sub(sid, uid, ss.planId, ss.variant, ss.start, ss.end, ss.choice);
-        students_[uid] = Student(uid, ss.username, ss.fullName, ss.room, salt, hash, ss.forcePasswordChange, sub);
-        stuIds.push_back(uid);
-        creds.push_back({"STUDENT", ss.username, ss.password, ss.fullName,
-                         ss.planId + (ss.forcePasswordChange ? " (First-Login Password Change)" : "")});
-    }
-
-    int64_t basePastUtc = nowUtc() - 3 * 86400LL;
-
-    // 5. Seed past approved skip requests + append-only ledger entries
-    auto addSeedApprovedSkip = [&](const std::string& stuId, const Date& d, MealType m, const std::string& reason, int64_t ts) {
-        std::string reqId = IdGenerator::nextReqId();
-        SingleSkipRequest req(reqId, stuId, d, m, reason, ts - 28800,
-                              RequestStatus::APPROVED, false, "",
-                              "Approved: submitted before 6h cutoff & not in counter log", ts);
-        skipRequests_.push_back(req);
-
-        Student& stu = students_[stuId];
-        const MealPlan* plan = plans_[stu.subscription().planId()].get();
-        const Transaction& txn = stu.wallet().credit(req, plan->mealPrice(m), *activeRefundPolicy_, ts);
-        PersistedTxnRow row{txn.id(), stuId, txn.type(), txn.amount(), txn.reason(), txn.refId(), txn.timestampUtc()};
-        ledgerRows_.push_back(row);
-    };
-
-    // Aarav (USR-0003): 2 past approved skips
-    addSeedApprovedSkip(stuIds[0], todayIst.addDays(-3), MealType::LUNCH,  "Department lab workshop", basePastUtc);
-    addSeedApprovedSkip(stuIds[0], todayIst.addDays(-2), MealType::DINNER, "Family dinner in city",   basePastUtc + 36000);
-
-    // Priya (USR-0004): 2 past approved skips
-    addSeedApprovedSkip(stuIds[1], todayIst.addDays(-2), MealType::LUNCH,  "Hackathon qualifier",     basePastUtc + 7200);
-    addSeedApprovedSkip(stuIds[1], todayIst.addDays(-1), MealType::DINNER, "Traveling home",          basePastUtc + 86400);
-
-    // Rohan (USR-0005 - near month-end with REFUND selected): 3 past approved skips (Executive Premium Plan)
-    addSeedApprovedSkip(stuIds[2], todayIst.addDays(-4), MealType::BREAKFAST, "Early morning clinic visit", basePastUtc - 40000);
-    addSeedApprovedSkip(stuIds[2], todayIst.addDays(-3), MealType::LUNCH,     "Internship interview",       basePastUtc);
-    addSeedApprovedSkip(stuIds[2], todayIst.addDays(-1), MealType::DINNER,    "Sports tournament",          basePastUtc + 90000);
-
-    // 6. Seed 2 Pending Requests in the Admin Queue (1 clean, 1 suspicious fraud case seen at counter!)
-    {
-        // Clean pending request from Aarav for tomorrow's Dinner
-        std::string r1 = IdGenerator::nextReqId();
-        skipRequests_.push_back(SingleSkipRequest(
-            r1, stuIds[0], todayIst.addDays(1), MealType::DINNER,
-            "Going to railway station", nowUtc() - 1800, RequestStatus::PENDING));
-
-        // Fraud-case pending request from Sneha (stuIds[3]): submitted for today's Breakfast,
-        // AND MessStaff logged Sneha eating at the counter!
-        std::string r2 = IdGenerator::nextReqId();
-        Date fraudDate = todayIst;
-        int64_t bfastCutoff = TimeUtils::mealCutoffUtc(fraudDate, MealType::BREAKFAST, 6);
-        skipRequests_.push_back(SingleSkipRequest(
-            r2, stuIds[3], fraudDate, MealType::BREAKFAST,
-            "Skipped breakfast due to headache", bfastCutoff - 3600, RequestStatus::PENDING));
-
-        AttendanceRecord att;
-        att.id = IdGenerator::nextAttId();
-        att.studentId = stuIds[3];
-        att.mealDate = fraudDate;
-        att.mealType = MealType::BREAKFAST;
-        att.markedBy = "messstaff";
-        att.timestampUtc = TimeUtils::mealStartUtc(fraudDate, MealType::BREAKFAST) + 900;
-        attendance_.push_back(att);
-    }
-
-    // 7. Seed welcome notifications
-    pushNotificationUnlocked(stuIds[0], "Welcome to Meal Wallet",
-                             "Your Standard Veg Plan is active. Approved missed meals credit 80% to your wallet.");
-    pushNotificationUnlocked(stuIds[2], "Plan Validity Ending Soon",
-                             "Your Executive Premium Plan ends tomorrow. Your current choice is REFUND (Rs. 192.00).");
-
-    // Persist everything cleanly to DATA_DIR
-    saveUsersAndSubsUnlocked();
-    skipRepo_->saveAll(skipRequests_);
-    ledgerRepo_->saveAll(ledgerRows_);
-    settlementRepo_->saveAll(settlements_);
-    payoutRepo_->saveAll(payouts_);
-    closureRepo_->saveAll(closures_);
-    attendanceRepo_->saveAll(attendance_);
-    notifRepo_->saveAll(notifications_);
-    sessionRepo_->saveAll({});
-    saveConfigUnlocked();
-
-    writeAuditUnlocked("SYSTEM", "SEED_DEMO", "Initialized demo seed data (1 admin, 1 staff, 5 students, 3 plans).");
-    return creds;
 }
 
 int64_t MealWalletService::nowUtc() const {
@@ -808,7 +625,7 @@ MealWalletService::LoginResult MealWalletService::login(const std::string& usern
         }
     }
 
-    if (!matchedUser || !Crypto::verifyPassword(password, matchedUser->passwordSalt(), matchedUser->passwordHash())) {
+    if (!matchedUser || !matchedUser->checkPassword(password)) {
         writeAuditUnlocked(username, "LOGIN_FAILED", "Invalid username or password");
         throw MealWalletException("Invalid username or password. Please check your credentials.", "AUTH_RULE");
     }
@@ -875,13 +692,11 @@ void MealWalletService::changePassword(const std::string& userId,
     if (!target) {
         throw MealWalletException("User account not found.", "USER_LOOKUP_RULE");
     }
-    if (!Crypto::verifyPassword(oldPassword, target->passwordSalt(), target->passwordHash())) {
+    if (!target->checkPassword(oldPassword)) {
         throw MealWalletException("Current password is incorrect.", "PASSWORD_POLICY_RULE");
     }
 
-    std::string newSalt = Crypto::generateSalt();
-    std::string newHash = Crypto::hashPassword(newPassword, newSalt);
-    target->updatePasswordHash(newSalt, newHash, false);
+    target->updatePassword(newPassword, false);
     saveUsersAndSubsUnlocked();
 
     writeAuditUnlocked(target->username(), "PASSWORD_CHANGED", "Completed password update");
@@ -913,12 +728,10 @@ MealWalletService::CreatedStudentInfo MealWalletService::createStudent(
     std::string uid = IdGenerator::nextUserId();
     std::string sid = IdGenerator::nextSubId();
     std::string tempPass = customInitialPassword.empty() ? Crypto::generateTempPassword() : customInitialPassword;
-    std::string salt = Crypto::generateSalt();
-    std::string hash = Crypto::hashPassword(tempPass, salt);
 
     PlanVariant variant = plans_[planId]->variant();
     Subscription sub(sid, uid, planId, variant, cycleStart, cycleEnd, SettlementChoice::CARRY_FORWARD);
-    Student stu(uid, username, fullName, roomNumber.empty() ? "Hostel-1" : roomNumber, salt, hash, true, sub);
+    Student stu(uid, username, fullName, roomNumber.empty() ? "Hostel-1" : roomNumber, tempPass, true, sub);
     students_[uid] = stu;
 
     saveUsersAndSubsUnlocked();

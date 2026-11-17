@@ -21,7 +21,6 @@ Or run specific modes from PowerShell/CMD:
 ```powershell
 .\run_windows.bat --test        # Run automated unit & edge-case test suite
 .\run_windows.bat --console     # Run pure console domain demo (no web layer)
-.\run_windows.bat --seed-demo   # Reset data folder & print demo credentials
 ```
 
 ---
@@ -58,24 +57,19 @@ g++ -std=c++17 -O2 -Wall -Wextra -pedantic -pthread -Iinclude -Ithird_party \
 
 | Command | Purpose |
 | :--- | :--- |
-| `./mealwallet` | Starts the HTTP server on `0.0.0.0:8080` (or `$PORT`), auto-creates `./data` if missing, seeds demo accounts if empty, and prints both the Local URL and LAN/Hotspot URL. |
-| `./mealwallet --seed-demo` | Resets `DATA_DIR` to the clean demo seed state (1 Admin, 1 Mess Staff, 5 Students across Veg/Non-Veg/Premium plans, past ledger credits, 1 fraud case, and 1 student near month-end) and prints the credential table. |
+| `./mealwallet` | Starts the HTTP server on `0.0.0.0:8080` (or `$PORT`), auto-creates `./data` if missing, loads real data, and prints both the Local URL and LAN/Hotspot URL. |
 | `./mealwallet --console` | Runs the complete end-to-end domain flow in the terminal **with zero web/HTTP layer** as a live presentation fallback. |
 | `./mealwallet --test` | Runs the automated unit & edge-case test suite (`Money`, `Date` leap-year/month-end boundaries, `DemoClock`, `RefundPolicy`, `Wallet` Rule of Five, `TextFileRepository` / `BinaryFileRepository` / `InMemoryRepository` round-trips, corrupted line recovery, simulated interrupted writes, cutoff breaches, duplicate requests, skip cap, closure overlap, zero-balance refund, and thread-safe concurrency). |
 
 ---
 
-## 3. Demo Credentials (Printed by `./mealwallet --seed-demo`)
+## 3. Demo Credentials (Printed on Startup)
 
 | Role | Username | Password | Full Name | Plan / Viva Demo Purpose |
 | :--- | :--- | :--- | :--- | :--- |
-| **ADMIN** | `admin` | `admin123` | Dr. Rajesh Sharma (Chief Warden) | Full Admin Console, Demo Clock, Approvals, Settlements |
-| **MESS_STAFF** | `messstaff` | `staff123` | Ramesh Kulkarni (Mess Counter) | Counter Attendance Marker & Headcount Forecast |
-| **STUDENT** | `aarav` | `student123` | Aarav Deshmukh | `PLAN-VEG` (Standard Veg Plan, clean pending skip) |
-| **STUDENT** | `priya` | `student123` | Priya Nair | `PLAN-NONVEG` (Protein Non-Veg Plan, `REFUND` choice) |
-| **STUDENT** | `rohan` | `student123` | Rohan Verma | `PLAN-PREMIUM` (Executive Premium, **Near Month-End**) |
-| **STUDENT** | `sneha` | `student123` | Sneha Joshi | `PLAN-VEG` (**Fraud Case**: skip raised + seen at counter) |
-| **STUDENT** | `vikram` | `firstlogin` | Vikram Patil | `PLAN-NONVEG` (**Forces Password Change on First Login**) |
+| **ADMIN** | `admin` | `admin123` | Admin (Chief Warden) | Full Admin Console, Demo Clock, Approvals, Settlements |
+| **MESS_STAFF** | `messstaff` | `staff123` | Mess Counter Staff | Counter Attendance Marker & Headcount Forecast |
+| **STUDENT** | `bt25cse147` | `student123` | Prajwal Hokrana | `PLAN-VEG` (Standard Veg Plan, active student account) |
 
 ---
 

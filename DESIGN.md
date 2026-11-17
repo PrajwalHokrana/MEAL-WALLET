@@ -43,11 +43,11 @@ All text files in `DATA_DIR` (default `./data`) use:
 
 ### 1. `students.txt` (All User Accounts: Student, Admin, MessStaff)
 - **Header:** `#MEALWALLET_V1|students`
-- **Fields (8):** `id|role|username|fullName|extraField|salt|passwordHash|mustChangePassword`
+- **Fields (7):** `id|role|username|fullName|extraField|password|mustChangePassword`
   - `extraField` stores `roomNumber` for `STUDENT`, `title` for `ADMIN`, and `shift` for `MESS_STAFF`.
 - **Example Line:**
   ```text
-  USR-0003|STUDENT|aarav|Aarav Deshmukh|B-204|8f3c1a9b02d4e711|4e9a7c21b8d30f5a6c11e9042d78a1b3c5d7e9f0123456789abcdef012345678|0
+  USR-0003|STUDENT|bt25cse147|Prajwal Hokrana|A-514|student123|0
   ```
 
 ### 2. `plans.txt` (Meal Plans & Per-Meal Prices in Paise)

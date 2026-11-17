@@ -919,31 +919,6 @@ void ApiServer::registerRoutes() {
             sendError(res, 400, ex.what(), "CLOCK_PARSE_RULE");
         }
     });
-
-    svr_.Post("/api/admin/demo/reset", [this, requireAdminOrStaff](const httplib::Request& req, httplib::Response& res) {
-        try {
-            requireAdminOrStaff(req);
-            auto creds = service_.resetAndSeedDemoData();
-            json credArr = json::array();
-            for (const auto& c : creds) {
-                json cj = json::object();
-                cj["role"] = c.role;
-                cj["username"] = c.username;
-                cj["password"] = c.password;
-                cj["fullName"] = c.fullName;
-                cj["planInfo"] = c.planInfo;
-                credArr.push_back(cj);
-            }
-            json out = json::object();
-            out["ok"] = true;
-            out["credentials"] = credArr;
-            out["clock"] = buildClockStateJson(service_);
-            out["message"] = "Demo seed data restored cleanly in under 1 second.";
-            sendJson(res, 200, out);
-        } catch (const MealWalletException& ex) {
-            sendError(res, 401, ex.what(), ex.ruleName());
-        }
-    });
 }
 
 } // namespace mealwallet

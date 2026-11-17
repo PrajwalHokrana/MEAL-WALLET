@@ -1,4 +1,4 @@
 #MEALWALLET_V1|students
-USR-0001|ADMIN|admin|Admin (Chief Warden)|Chief Mess Warden|14a0632295ab1149|55eb0402f83a9cc78cec753d30cbd05ed7b579001d15c8ffad529bc4165bc798|0
-USR-0002|MESS_STAFF|messstaff|Mess Counter Staff|ALL_MEALS|3fc53459a1d342a6|de562ac7e4f5039317d053996c8d879b79b1cb568df779dc929dc3c4f4522b46|0
-USR-0003|STUDENT|bt25cse147|Prajwal Hokrana|A-514|50d18cfae47df377|870f090bbcb8614f580c3cb3909a19c7abe02a288ff190c0cb1e20173b7f6639|0
+USR-0001|ADMIN|admin|Admin (Chief Warden)|Chief Mess Warden|admin123|0
+USR-0002|MESS_STAFF|messstaff|Mess Counter Staff|ALL_MEALS|staff123|0
+USR-0003|STUDENT|bt25cse147|Prajwal Hokrana|A-514|student123|0
