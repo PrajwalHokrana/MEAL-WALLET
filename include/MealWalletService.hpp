@@ -208,6 +208,10 @@ public:
                                   const std::string& reason,
                                   const std::string& adminUsername = "admin");
 
+    // Admin: Reopen Mess / Cancel Closure (reverses auto-credits and removes record)
+    ClosureRecord removeMessClosure(const std::string& closureId,
+                                    const std::string& adminUsername = "admin");
+
     // Admin: Month-End Settlement Runner & Offline Payout Marking
     std::vector<SettlementRecord> runMonthlySettlement(const std::string& yearMonth,
                                                        const std::string& adminUsername = "admin");

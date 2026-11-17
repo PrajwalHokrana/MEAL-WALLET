@@ -72,6 +72,8 @@
 2. **On Laptop A (Admin Console):**
    - In **"3. Mark Mess-Closed Meal"**, select tomorrow's date, `DINNER`, reason `"Kitchen Deep Cleaning"`, and click **"Mark Closed & Auto-Credit All"**.
    - **Expected Result:** Banner confirms every active student was auto-credited **100%** of their plan's Dinner price (`FullRefundPolicy`), and tomorrow's Dinner forecast headcount drops to **`0 plates (MESS CLOSED)`**.
+   - **Cancel / Reopen Demonstration (10 seconds):** Under **Active Closures & Reopen**, click **"Reopen / Cancel"** on that closure.
+   - **Expected Result:** Banner confirms closure is cancelled, auto-credits are reversed safely from student wallets without risking negative balances, students receive a "Mess Reopened" notification, and headcount forecast is restored.
 
 ---
 

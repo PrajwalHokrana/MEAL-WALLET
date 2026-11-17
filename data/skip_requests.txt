@@ -1,2 +1,3 @@
 #MEALWALLET_V1|skip_requests
 REQ-0001|USR-0004|2026-11-17|DINNER|APPROVED|Won't be eating dinner today|1794904200|1|I was only accompanying my friend since i had a stomach issue but didn;t eat|Approved by Admin|1794904200|
+REQ-0033|USR-0005|2026-11-19|LUNCH|APPROVED|Absent|1795017087|0||Approved by Admin|1795017087|

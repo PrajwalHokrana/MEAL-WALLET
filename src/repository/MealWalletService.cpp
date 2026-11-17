@@ -1307,6 +1307,58 @@ ClosureRecord MealWalletService::markMessClosure(const Date& closureDate,
     return cl;
 }
 
+ClosureRecord MealWalletService::removeMessClosure(const std::string& closureId,
+                                                   const std::string& adminUsername) {
+    compat::LockGuard lock(mutex_);
+    auto it = std::find_if(closures_.begin(), closures_.end(),
+                           [&](const ClosureRecord& c) { return c.id == closureId; });
+    if (it == closures_.end()) {
+        throw MealWalletException("Closure " + closureId + " not found.", "LOOKUP_RULE");
+    }
+
+    ClosureRecord removed = *it;
+    int64_t ts = nowUtc();
+
+    // Reverse auto-credits for enrolled students on this closure slot
+    FullRefundPolicy fullClosurePolicy;
+    for (auto& kv : students_) {
+        const auto& stuId = kv.first;
+        auto& stu = kv.second;
+        if (!stu.subscription().coversDate(removed.closureDate)) continue;
+
+        auto pIt = plans_.find(stu.subscription().planId());
+        if (pIt == plans_.end()) continue;
+        Money mealPrice = fullClosurePolicy.compute(pIt->second->mealPrice(removed.mealType));
+
+        // Deduct up to current balance or meal price
+        Money toDebit = (stu.wallet().balance() < mealPrice) ? stu.wallet().balance() : mealPrice;
+        if (toDebit > Money::fromPaise(0)) {
+            std::string desc = "Reversal: Mess Closure Cancelled (" + removed.id + ") - " +
+                               toString(removed.mealType) + " on " + removed.closureDate.toString() + " reopened";
+            const Transaction& txn = stu.wallet().debit(toDebit, desc, ts, "CLS-REV-" + removed.id);
+            PersistedTxnRow row{txn.id(), stuId, txn.type(), txn.amount(), txn.reason(), txn.refId(), txn.timestampUtc()};
+            ledgerRows_.push_back(row);
+            ledgerRepo_->appendOne(row);
+        }
+
+        pushNotificationUnlocked(stuId, "Mess Reopened (" + toString(removed.mealType) + ")",
+                                 "The mess closure for " + toString(removed.mealType) + " on " +
+                                 removed.closureDate.toString() + " has been cancelled. Meals will be served as usual.");
+    }
+
+    // Save updated student wallets
+    saveUsersAndSubsUnlocked();
+
+    // Erase closure from vector and persist
+    closures_.erase(it);
+    closureRepo_->saveAll(closures_);
+
+    writeAuditUnlocked(adminUsername, "MESS_CLOSURE_REMOVED",
+                       "Cancelled closure " + removed.id + " for " +
+                       removed.closureDate.toString() + " " + toString(removed.mealType));
+    return removed;
+}
+
 std::vector<SettlementRecord> MealWalletService::runMonthlySettlement(const std::string& yearMonth,
                                                                       const std::string& adminUsername) {
     compat::LockGuard lock(mutex_);

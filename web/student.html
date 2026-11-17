@@ -82,9 +82,12 @@
       <!-- Skip Request Form -->
       <section class="card">
         <div class="card-header">
-          <h2 class="card-title">Plan Ahead: Skip or Multi-Day Leave</h2>
+          <div>
+            <h2 class="card-title">Plan Ahead: Skip or Multi-Day Leave</h2>
+            <small id="planValidityNote" style="color:var(--text-muted); font-size:0.78rem;"></small>
+          </div>
         </div>
-        <form id="multiSkipForm">
+        <form id="multiSkipForm" novalidate>
           <label for="skipModeSelect">Request Type</label>
           <select id="skipModeSelect">
             <option value="SINGLE">Single Meal Skip (Future Date)</option>
@@ -93,7 +96,7 @@
 
           <div id="singleDateFields">
             <label for="singleDateInput">Meal Date</label>
-            <input type="date" id="singleDateInput" required />
+            <input type="date" id="singleDateInput" />
             <label for="singleMealSelect">Meal Slot</label>
             <select id="singleMealSelect">
               <option value="BREAKFAST">BREAKFAST (08:00 AM)</option>
@@ -128,9 +131,11 @@
           </div>
 
           <label for="skipReasonInput">Reason</label>
-          <input type="text" id="skipReasonInput" placeholder="e.g. Going home for the weekend" required />
+          <input type="text" id="skipReasonInput" placeholder="e.g. Going home for the weekend" />
 
-          <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Request</button>
+          <div id="planAheadAlert" style="display:none; padding:10px 14px; border-radius:6px; margin:10px 0; font-size:0.86rem; font-weight:500;"></div>
+
+          <button type="submit" id="submitSkipBtn" class="btn btn-primary" style="width: 100%;">Submit Request</button>
         </form>
       </section>
 
@@ -252,9 +257,28 @@
 
     function showBanner(id, msg) {
       const el = document.getElementById(id);
+      if (!el) return;
       el.textContent = msg;
       el.classList.add('show');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setTimeout(() => el.classList.remove('show'), 7000);
+    }
+
+    function showPlanAheadAlert(type, msg) {
+      const el = document.getElementById('planAheadAlert');
+      if (!el) return;
+      el.textContent = msg;
+      el.style.display = 'block';
+      if (type === 'error') {
+        el.style.background = '#fef2f2';
+        el.style.color = '#b91c1c';
+        el.style.border = '1px solid #f87171';
+      } else {
+        el.style.background = '#ecfdf5';
+        el.style.color = '#047857';
+        el.style.border = '1px solid #6ee7b7';
+      }
+      setTimeout(() => { el.style.display = 'none'; }, 8000);
     }
 
     // ── Appeal Modal logic ──
@@ -447,13 +471,30 @@
 
         document.getElementById('todayDateLabel').textContent = dash.clock.todayIstDate;
 
-        if (!initializedDates) {
-          document.getElementById('singleDateInput').value = dash.clock.tomorrowIstDate;
-          document.getElementById('rangeStartInput').value = dash.clock.tomorrowIstDate;
-          document.getElementById('rangeEndInput').value   = dash.clock.tomorrowIstDate;
-          document.getElementById('settlementChoiceSelect').value = stu.subscription.settlementChoice;
-          document.getElementById('nextCyclePlanSelect').value = stu.subscription.nextCyclePlanId || '';
-          initializedDates = true;
+        if (stu.subscription && stu.subscription.startDate && stu.subscription.endDate) {
+          const sDate = stu.subscription.startDate;
+          const eDate = stu.subscription.endDate;
+          const valNote = document.getElementById('planValidityNote');
+          if (valNote) valNote.textContent = `Active plan valid: ${sDate} to ${eDate}`;
+
+          const singleInput = document.getElementById('singleDateInput');
+          const rangeStart  = document.getElementById('rangeStartInput');
+          const rangeEnd    = document.getElementById('rangeEndInput');
+
+          if (singleInput) { singleInput.min = sDate; singleInput.max = eDate; }
+          if (rangeStart)  { rangeStart.min  = sDate; rangeStart.max  = eDate; }
+          if (rangeEnd)    { rangeEnd.min    = sDate; rangeEnd.max    = eDate; }
+
+          if (!initializedDates) {
+            const tom = dash.clock.tomorrowIstDate;
+            const defDate = (tom >= sDate && tom <= eDate) ? tom : sDate;
+            if (singleInput) singleInput.value = defDate;
+            if (rangeStart)  rangeStart.value  = defDate;
+            if (rangeEnd)    rangeEnd.value    = defDate;
+            document.getElementById('settlementChoiceSelect').value = stu.subscription.settlementChoice;
+            document.getElementById('nextCyclePlanSelect').value = stu.subscription.nextCyclePlanId || '';
+            initializedDates = true;
+          }
         }
 
         // Meal cards
@@ -568,26 +609,76 @@
       e.preventDefault();
       const mode = document.getElementById('skipModeSelect').value;
       const reason = document.getElementById('skipReasonInput').value.trim();
+      const submitBtn = document.getElementById('submitSkipBtn') || e.target.querySelector('button[type="submit"]');
+
+      if (!reason) {
+        showPlanAheadAlert('error', 'Please enter a reason for the skip.');
+        showBanner('studentAlertError', 'Please enter a reason for the skip.');
+        return;
+      }
+
       const payload = { mode, reason };
       if (mode === 'MULTI') {
         payload.startDate = document.getElementById('rangeStartInput').value;
         payload.endDate   = document.getElementById('rangeEndInput').value;
         payload.meals = Array.from(document.querySelectorAll('.multi-meal-cb:checked')).map(cb => cb.value);
+
+        if (!payload.startDate || !payload.endDate) {
+          showPlanAheadAlert('error', 'Please select both start date and end date.');
+          showBanner('studentAlertError', 'Please select both start date and end date.');
+          return;
+        }
+        if (payload.startDate > payload.endDate) {
+          showPlanAheadAlert('error', 'Start date cannot be after end date.');
+          showBanner('studentAlertError', 'Start date cannot be after end date.');
+          return;
+        }
+        if (payload.meals.length === 0) {
+          showPlanAheadAlert('error', 'Please select at least one meal to skip.');
+          showBanner('studentAlertError', 'Please select at least one meal to skip.');
+          return;
+        }
       } else {
         payload.mealDate = document.getElementById('singleDateInput').value;
         payload.mealType = document.getElementById('singleMealSelect').value;
+
+        if (!payload.mealDate) {
+          showPlanAheadAlert('error', 'Please select a meal date.');
+          showBanner('studentAlertError', 'Please select a meal date.');
+          return;
+        }
       }
+
       try {
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Submitting...';
+        }
         const res = await fetch('/api/student/skips', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Session-Token': token },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
-        if (!res.ok || !data.ok) { showBanner('studentAlertError', data.error + (data.rule ? ` [${data.rule}]` : '')); return; }
+        if (!res.ok || !data.ok) {
+          const errText = data.error + (data.rule ? ` [${data.rule}]` : '');
+          showPlanAheadAlert('error', errText);
+          showBanner('studentAlertError', errText);
+          return;
+        }
+        showPlanAheadAlert('success', data.message);
         showBanner('studentAlertSuccess', data.message);
+        document.getElementById('skipReasonInput').value = '';
         await pollStudentData();
-      } catch (_) { showBanner('studentAlertError', 'Failed to submit request.'); }
+      } catch (_) {
+        showPlanAheadAlert('error', 'Failed to submit request: Network or connection error.');
+        showBanner('studentAlertError', 'Failed to submit request.');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Request';
+        }
+      }
     });
 
     document.getElementById('settlementForm').addEventListener('submit', async (e) => {

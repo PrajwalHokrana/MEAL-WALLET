@@ -690,6 +690,19 @@ void ApiServer::registerRoutes() {
                 setArr.push_back(sj);
             }
 
+            json clArr = json::array();
+            for (const auto& cl : service_.listClosures()) {
+                json cj = json::object();
+                cj["id"] = cl.id;
+                cj["closureDate"] = cl.closureDate.toString();
+                cj["mealType"] = toString(cl.mealType);
+                cj["reason"] = cl.reason;
+                cj["studentsCredited"] = cl.studentsCredited;
+                cj["totalCreditedFormatted"] = cl.totalCredited.toRupeeString();
+                cj["createdAtIst"] = TimeUtils::formatIstPretty(cl.createdAtUtc);
+                clArr.push_back(cj);
+            }
+
             json out = json::object();
             out["ok"] = true;
             out["clock"] = buildClockStateJson(service_);
@@ -697,6 +710,7 @@ void ApiServer::registerRoutes() {
             out["students"] = stuArr;
             out["payouts"] = payArr;
             out["settlements"] = setArr;
+            out["closures"] = clArr;
             sendJson(res, 200, out);
         } catch (const MealWalletException& ex) {
             sendError(res, 401, ex.what(), ex.ruleName());
@@ -774,6 +788,38 @@ void ApiServer::registerRoutes() {
                              " closed. Auto-credited " + std::to_string(cl.studentsCredited) +
                              " active students (" + cl.totalCredited.toRupeeString() + " total).";
             sendJson(res, 201, out);
+        } catch (const MealWalletException& ex) {
+            sendError(res, 400, ex.what(), ex.ruleName());
+        } catch (const std::exception& ex) {
+            sendError(res, 400, ex.what(), "VALIDATION_RULE");
+        }
+    });
+
+    svr_.Delete(R"(/api/admin/closures/([A-Za-z0-9\-]+))", [this, requireAdminOrStaff](const httplib::Request& req, httplib::Response& res) {
+        try {
+            SessionRecord sess = requireAdminOrStaff(req);
+            std::string closureId = req.matches[1].str();
+            auto removed = service_.removeMessClosure(closureId, sess.username);
+            json out = json::object();
+            out["ok"] = true;
+            out["message"] = "Cancelled closure " + removed.id + " (" + removed.closureDate.toString() + " " + toString(removed.mealType) + "). Mess reopened and auto-credits reversed.";
+            sendJson(res, 200, out);
+        } catch (const MealWalletException& ex) {
+            sendError(res, 400, ex.what(), ex.ruleName());
+        } catch (const std::exception& ex) {
+            sendError(res, 400, ex.what(), "VALIDATION_RULE");
+        }
+    });
+
+    svr_.Post(R"(/api/admin/closures/([A-Za-z0-9\-]+)/delete)", [this, requireAdminOrStaff](const httplib::Request& req, httplib::Response& res) {
+        try {
+            SessionRecord sess = requireAdminOrStaff(req);
+            std::string closureId = req.matches[1].str();
+            auto removed = service_.removeMessClosure(closureId, sess.username);
+            json out = json::object();
+            out["ok"] = true;
+            out["message"] = "Cancelled closure " + removed.id + " (" + removed.closureDate.toString() + " " + toString(removed.mealType) + "). Mess reopened and auto-credits reversed.";
+            sendJson(res, 200, out);
         } catch (const MealWalletException& ex) {
             sendError(res, 400, ex.what(), ex.ruleName());
         } catch (const std::exception& ex) {

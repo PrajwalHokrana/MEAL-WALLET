@@ -6,3 +6,18 @@ NTF-0004|USR-0004|Skip Approved & Credited (Rs. 44.00)|Your skip for DINNER on 2
 NTF-0005|USR-0004|Next-Cycle Plan Queued|Your plan change to Protein Non-Veg Plan will take effect from the next cycle (after 2026-11-30).|0|1794904200
 NTF-0006|USR-0004|Month-End Settlement (2026-11)|Month-end REFUND processed for Rs. 44.00 (Payout ID: PAY-0001). Admin will mark paid offline.|0|1794904200
 NTF-0007|USR-0004|Refund Payout Completed (Rs. 44.00)|Payout PAY-0001 marked paid offline: Paid offline via UPI by Admin|0|1794904200
+NTF-0008|USR-0003|Mess Closure Credit (Rs. 35.00)|Mess Closed Auto-Credit (100%): BREAKFAST on 2026-11-18 - Maintained|0|1794930588
+NTF-0009|USR-0004|Meal Plan Renewed|Your Standard Veg Plan has been renewed from 2026-12-31 to 2027-01-30.|0|1794930605
+NTF-0010|USR-0004|Meal Plan Renewed|Your Standard Veg Plan has been renewed from 2026-12-31 to 2027-01-30.|0|1794930606
+NTF-0011|USR-0004|Meal Plan Renewed|Your Standard Veg Plan has been renewed from 2026-12-31 to 2027-01-30.|0|1794930607
+NTF-0012|USR-0004|Meal Plan Renewed|Your Standard Veg Plan has been renewed from 2026-12-31 to 2027-01-30.|0|1794930607
+NTF-0013|USR-0004|Meal Plan Renewed|Your Standard Veg Plan has been renewed from 2026-12-31 to 2027-01-30.|0|1794930608
+NTF-0014|USR-0004|Meal Plan Renewed|Your Standard Veg Plan has been renewed from 2026-12-31 to 2027-01-30.|0|1794930608
+NTF-0015|USR-0005|Account Created|Assigned Executive Premium Plan (2026-11-01 to 2026-11-30).|0|1794930677
+NTF-0016|USR-0003|Month-End Settlement (2026-11)|Month-end REFUND processed for Rs. 35.00 (Payout ID: PAY-0002). Admin will mark paid offline.|0|1795017087
+NTF-0017|USR-0003|Refund Payout Completed (Rs. 35.00)|Payout PAY-0002 marked paid offline: Paid offline via UPI by Admin|0|1795017087
+NTF-0018|USR-0005|Skip Approved & Credited (Rs. 72.00)|Your skip for LUNCH on 2026-11-19 was approved. Credited Rs. 72.00 to your wallet.|0|1795017087
+NTF-0019|USR-0005|Month-End Settlement (2026-11)|Month-end CARRY_FORWARD applied: Rs. 72.00 deducted from your next mess plan bill.|0|1795017087
+NTF-0020|USR-0003|Mess Reopened (BREAKFAST)|The mess closure for BREAKFAST on 2026-11-18 has been cancelled. Meals will be served as usual.|0|1794934395
+NTF-0021|USR-0004|Mess Reopened (BREAKFAST)|The mess closure for BREAKFAST on 2026-11-18 has been cancelled. Meals will be served as usual.|0|1794934395
+NTF-0022|USR-0005|Mess Reopened (BREAKFAST)|The mess closure for BREAKFAST on 2026-11-18 has been cancelled. Meals will be served as usual.|0|1794934395

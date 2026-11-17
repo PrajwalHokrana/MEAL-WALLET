@@ -145,6 +145,13 @@
           <input type="text" id="closureReasonInput" placeholder="e.g. Festival Holiday / Kitchen Maintenance" required />
           <button type="submit" class="btn btn-primary" style="width: 100%;">Mark Closed &amp; Auto-Credit All</button>
         </form>
+
+        <div style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+          <h3 style="font-size: 0.92rem; font-weight: 700; margin-bottom: 8px;">Active Closures &amp; Reopen</h3>
+          <div id="closuresList">
+            <p style="color:var(--text-muted); font-size:0.83rem;">No active closures recorded.</p>
+          </div>
+        </div>
       </section>
 
       <!-- Renew Student Subscription -->
@@ -380,6 +387,27 @@
       await pollAdminData();
     });
 
+    async function removeClosure(closureId) {
+      if (!confirm(`Are you sure you want to cancel closure ${closureId} and reopen the mess? Auto-credits will be reversed.`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/api/admin/closures/${encodeURIComponent(closureId)}`, {
+          method: 'DELETE',
+          headers: { 'X-Session-Token': token }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          showAdminBanner('adminAlertError', data.error || 'Failed to remove closure.');
+          return;
+        }
+        showAdminBanner('adminAlertSuccess', data.message);
+        await pollAdminData();
+      } catch (_) {
+        showAdminBanner('adminAlertError', 'Network error: Failed to remove closure.');
+      }
+    }
+
     document.getElementById('runSettlementBtn').addEventListener('click', async () => {
       const res = await fetch('/api/admin/settlement/run', {
         method: 'POST',
@@ -513,6 +541,25 @@
                 Enrolled: <strong>${f.totalEnrolled}</strong> &bull; Approved Skips: <strong>${f.approvedSkips}</strong>
               </div>
             </div>`).join('');
+        }
+
+        // Active Closures List
+        const closures = skipsData.closures || [];
+        const closuresContainer = document.getElementById('closuresList');
+        if (closuresContainer) {
+          if (closures.length === 0) {
+            closuresContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.83rem;">No active closures recorded.</p>';
+          } else {
+            closuresContainer.innerHTML = closures.map(c => `
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:6px; margin-bottom:6px;">
+                <div>
+                  <strong style="color:var(--text-color); font-size:0.86rem;">${c.closureDate} &bull; ${c.mealType}</strong>
+                  <br/><small style="color:var(--text-muted); font-size:0.78rem;">${escapeHtml(c.reason)} (${c.studentsCredited} credited, ${c.totalCreditedFormatted})</small>
+                </div>
+                <button class="btn btn-danger btn-sm" onclick="removeClosure('${c.id}')" title="Reopen mess and reverse credits">Reopen / Cancel</button>
+              </div>
+            `).join('');
+          }
         }
 
         // Pending queue — factual flags only, NO "SUGGESTED: APPROVE/REJECT"

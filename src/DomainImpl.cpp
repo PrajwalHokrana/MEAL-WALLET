@@ -342,15 +342,23 @@ SettlementEngine::Result SettlementEngine::settleStudentMonthEnd(Student& studen
     }
 
     // Advance subscription cycle by 30 days and apply any queued nextCyclePlanId
-    Date nextStart = student.subscription().endDate().addDays(1);
+    Date todayIst = TimeUtils::currentIstDate(nowUtc);
+    Date curEnd   = student.subscription().endDate();
+    Date nextStart = curEnd.addDays(1);
     Date nextEnd   = nextStart.addDays(29);
+
+    // Keep active month continuous if settlement is run before current cycle expires
+    Date effectiveStart = (todayIst <= curEnd && student.subscription().startDate() <= todayIst)
+        ? student.subscription().startDate()
+        : nextStart;
+
     PlanVariant nextVar = student.subscription().planVariant();
     if (student.subscription().nextCyclePlanId() == "PLAN-VEG") nextVar = PlanVariant::VEG;
     else if (student.subscription().nextCyclePlanId() == "PLAN-NONVEG") nextVar = PlanVariant::NON_VEG;
     else if (student.subscription().nextCyclePlanId() == "PLAN-PREMIUM") nextVar = PlanVariant::PREMIUM;
 
     Money carryDiscount = (choice == SettlementChoice::CARRY_FORWARD) ? currentBal : Money::fromPaise(0);
-    student.subscription().rollToNextCycle(nextStart, nextEnd, nextVar, carryDiscount);
+    student.subscription().rollToNextCycle(effectiveStart, nextEnd, nextVar, carryDiscount);
 
     return res;
 }
