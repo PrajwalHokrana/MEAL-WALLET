@@ -201,6 +201,7 @@
                 <th>Student</th>
                 <th>Amount</th>
                 <th>Method / Status</th>
+                <th>Next Cycle Plan</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -221,7 +222,7 @@
                 <th>Name &amp; Room</th>
                 <th>Plan &amp; End Date</th>
                 <th>Balance</th>
-                <th>Month-End</th>
+                <th>Month-End &amp; Next Plan</th>
               </tr>
             </thead>
             <tbody id="studentsRosterTableBody"></tbody>
@@ -398,7 +399,9 @@
       if (!opt || !opt.dataset.end) return;
       const endStr = opt.dataset.end;
       const curPlan = opt.dataset.plan;
-      if (curPlan) document.getElementById('renewPlanSelect').value = curPlan;
+      const nextPlan = opt.dataset.nextPlan;
+      const targetPlan = nextPlan || curPlan;
+      if (targetPlan) document.getElementById('renewPlanSelect').value = targetPlan;
 
       // Next day after current end
       const parts = endStr.split('-').map(Number);
@@ -442,6 +445,16 @@
       await pollAdminData();
     });
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     async function pollAdminData() {
       try {
         const forecastDateParam = document.getElementById('forecastDateInput').value || '';
@@ -450,7 +463,11 @@
           fetch('/api/admin/forecast?date=' + encodeURIComponent(forecastDateParam), { headers: { 'X-Session-Token': token } })
         ]);
 
-        if (skipsRes.status === 401) { window.location.href = '/'; return; }
+        if (skipsRes.status === 401 || skipsRes.status === 403) {
+          localStorage.removeItem('mw_token');
+          window.location.href = '/';
+          return;
+        }
 
         const skipsData    = await skipsRes.json();
         const forecastData = await forecastRes.json();
@@ -527,14 +544,33 @@
               checksHtml += `<span class="badge badge-rejected" style="margin-bottom:3px;">&#9888; Seen at counter</span>`;
             }
 
+            let reasonHtml = '';
+            if (r.appealed) {
+              reasonHtml = `
+                <div>
+                  <div style="margin-bottom:4px;">
+                    <span class="badge badge-info" style="font-size:0.70rem; padding:2px 6px;">APPEAL REASON</span>
+                    <div style="color:var(--text-color); font-weight:600; font-size:0.86rem; margin-top:3px; background:rgba(180,83,9,0.08); border-left:3px solid var(--primary); padding:4px 8px; border-radius:4px;">
+                      "${escapeHtml(r.appealReason || 'No appeal explanation provided')}"
+                    </div>
+                  </div>
+                  <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
+                    <span>Original Skip Reason: "${escapeHtml(r.reason)}"</span>
+                    ${r.adminNote ? `<br/><span style="color:var(--text-danger);">Previous Rejection: "${escapeHtml(r.adminNote)}"</span>` : ''}
+                  </div>
+                </div>`;
+            } else {
+              reasonHtml = `<em style="font-size:0.83rem;">"${escapeHtml(r.reason)}"</em>`;
+            }
+
             return `
               <tr>
                 <td class="mono">${r.id}${r.appealed ? '<br/><span class="badge badge-info">APPEALED</span>' : ''}</td>
-                <td><strong>${r.studentName}</strong> (${r.studentUsername})<br/><small style="color:var(--text-muted);">Room ${r.roomNumber} &bull; ${r.planId}</small></td>
+                <td><strong>${escapeHtml(r.studentName)}</strong> (${escapeHtml(r.studentUsername)})<br/><small style="color:var(--text-muted);">Room ${escapeHtml(r.roomNumber)} &bull; ${r.planId}</small></td>
                 <td><strong>${r.mealDate}</strong><br/>${r.mealType}</td>
                 <td class="mono"><strong>${r.estimatedRefundFormatted || '-'}</strong><br/><small>of ${r.baseMealPriceFormatted || '-'}</small></td>
                 <td>${checksHtml || '<span style="color:var(--text-muted);">No flags</span>'}</td>
-                <td><em style="font-size:0.83rem;">"${r.reason}"</em></td>
+                <td>${reasonHtml}</td>
                 <td>
                   <div style="display: flex; gap: 6px;">
                     <button class="btn btn-primary btn-sm" onclick="decideRequest('${r.id}', 'APPROVE')">Approve</button>
@@ -550,24 +586,33 @@
         const renewSel = document.getElementById('renewStudentSelect');
         if (renewSel && students.length > 0) {
           const curVal = renewSel.value;
-          renewSel.innerHTML = '<option value="">-- Choose student to renew --</option>' + students.map(s => `
-            <option value="${s.id}" data-plan="${s.planId}" data-end="${s.endDate}">
-              ${s.fullName} (${s.username}) — Plan: ${s.planId} (Ends: ${s.endDate})
-            </option>
-          `).join('');
+          renewSel.innerHTML = '<option value="">-- Choose student to renew --</option>' + students.map(s => {
+            const nextLabel = s.nextCyclePlanId ? ` [Choice: ${s.nextCyclePlanName || s.nextCyclePlanId}]` : '';
+            return `
+            <option value="${s.id}" data-plan="${s.planId}" data-next-plan="${s.nextCyclePlanId || ''}" data-end="${s.endDate}">
+              ${escapeHtml(s.fullName)} (${escapeHtml(s.username)}) — Plan: ${s.planId}${nextLabel} (Ends: ${s.endDate})
+            </option>`;
+          }).join('');
           if (curVal) renewSel.value = curVal;
         }
 
         document.getElementById('studentsRosterTableBody').innerHTML = students.map(s => `
           <tr>
-            <td class="mono">${s.id} (${s.username})</td>
-            <td><strong>${s.fullName}</strong> &bull; ${s.roomNumber}</td>
+            <td class="mono">${s.id} (${escapeHtml(s.username)})</td>
+            <td><strong>${escapeHtml(s.fullName)}</strong> &bull; ${escapeHtml(s.roomNumber)}</td>
             <td>${s.planId}<br/><small style="color:var(--text-muted);">Ends ${s.endDate}</small></td>
             <td class="mono" style="font-weight:700; color:var(--primary);">
               ${s.balanceFormatted}
               ${s.carryForwardPaise > 0 ? `<br/><small style="color:var(--text-muted); font-size:0.75rem;">+${s.carryForwardFormatted} carried forward</small>` : ''}
             </td>
-            <td><span class="badge ${s.settlementChoice === 'REFUND' ? 'badge-amber' : 'badge-info'}">${s.settlementChoice}</span></td>
+            <td>
+              <span class="badge ${s.settlementChoice === 'REFUND' ? 'badge-amber' : 'badge-info'}">${s.settlementChoice}</span>
+              <div style="font-size:0.75rem; margin-top:4px;">
+                ${s.nextCyclePlanId
+                  ? `<strong style="color:var(--primary);">&#x27A4; Next: ${escapeHtml(s.nextCyclePlanName || s.nextCyclePlanId)}</strong>`
+                  : `<span style="color:var(--text-muted);">&#x27A4; Next: Keep current</span>`}
+              </div>
+            </td>
           </tr>`).join('');
 
         // Month-End Settlements & Payouts
@@ -576,7 +621,7 @@
         const pBody       = document.getElementById('payoutsTableBody');
 
         if (settlements.length === 0 && payouts.length === 0) {
-          pBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No settlements yet. Run Month-End Settlement to process active balances.</td></tr>';
+          pBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No settlements yet. Run Month-End Settlement to process active balances.</td></tr>';
         } else if (settlements.length > 0) {
           const payMap = {};
           payouts.forEach(p => { payMap[p.id] = p; });
@@ -602,9 +647,10 @@
             return `
               <tr>
                 <td class="mono">${s.id}${s.payoutId ? `<br/><small class="mono" style="color:var(--text-muted);">${s.payoutId}</small>` : ''}</td>
-                <td>${s.studentName || s.studentId}</td>
+                <td><strong>${escapeHtml(s.studentName || s.studentId)}</strong></td>
                 <td class="mono" style="font-weight:700; color:var(--primary);">${s.amountFormatted}</td>
                 <td>${badgeHtml}</td>
+                <td><span class="badge badge-info">${escapeHtml(s.nextPlanName || s.nextPlanId || 'Keep Current')}</span></td>
                 <td>${actionHtml}</td>
               </tr>`;
           }).join('');
@@ -612,9 +658,10 @@
           pBody.innerHTML = payouts.map(p => `
             <tr>
               <td class="mono">${p.id}</td>
-              <td>${p.studentName}</td>
+              <td><strong>${escapeHtml(p.studentName)}</strong></td>
               <td class="mono" style="font-weight:700;">${p.amountFormatted}</td>
               <td><span class="badge ${p.paidOffline ? 'badge-approved' : 'badge-pending'}">${p.paidOffline ? 'PAID' : 'PENDING'}</span></td>
+              <td>-</td>
               <td>${p.paidOffline
                 ? `<small style="color:var(--text-muted);">Paid at ${p.paidAtIst}</small>`
                 : `<button class="btn btn-primary btn-sm" onclick="markPayoutPaid('${p.id}')">Mark Paid</button>`}

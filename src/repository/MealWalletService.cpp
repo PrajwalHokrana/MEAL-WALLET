@@ -189,7 +189,7 @@ void MealWalletService::initRepositories() {
         });
 
     // 6. settlements.txt
-    // Columns: id|studentId|yearMonth|choice|settledPaise|payoutId|settledAtUtc
+    // Columns: id|studentId|yearMonth|choice|settledPaise|payoutId|settledAtUtc|nextPlanId
     settlementRepo_ = makeRepository<SettlementRecord>(
         repoMode_, dataDir_ + "/settlements.txt", "settlements", 7,
         [](const SettlementRecord& s) {
@@ -200,7 +200,8 @@ void MealWalletService::initRepositories() {
                 << toString(s.choice) << "|"
                 << s.settledAmount.paise() << "|"
                 << escapeField(s.payoutId) << "|"
-                << s.settledAtUtc;
+                << s.settledAtUtc << "|"
+                << escapeField(s.nextPlanId);
             return oss.str();
         },
         [](const std::vector<std::string>& c, SettlementRecord& s) {
@@ -211,6 +212,9 @@ void MealWalletService::initRepositories() {
             s.settledAmount = Money::fromPaise(std::stoll(c[4]));
             s.payoutId = c[5];
             s.settledAtUtc = std::stoll(c[6]);
+            if (c.size() >= 8) {
+                s.nextPlanId = c[7];
+            }
             return !s.id.empty();
         });
 
@@ -1043,6 +1047,13 @@ void MealWalletService::requestNextCyclePlanChange(const std::string& studentId,
     compat::LockGuard lock(mutex_);
     auto sIt = students_.find(studentId);
     if (sIt == students_.end()) throw MealWalletException("Student not found.", "LOOKUP_RULE");
+    if (newPlanId.empty()) {
+        sIt->second.subscription().scheduleNextCyclePlan("");
+        saveUsersAndSubsUnlocked();
+        writeAuditUnlocked(sIt->second.username(), "NEXT_CYCLE_PLAN_CLEARED",
+                           "Cleared next cycle plan choice; keeping current plan");
+        return;
+    }
     if (plans_.find(newPlanId) == plans_.end()) {
         throw MealWalletException("Invalid target plan ID: " + newPlanId, "VALID_PLAN_RULE");
     }

@@ -497,7 +497,7 @@ void ApiServer::registerRoutes() {
         try {
             SessionRecord sess = service_.authenticateToken(extractBearerOrCookieToken(req));
             json body = json::parse(req.body);
-            if (body.contains("nextCyclePlanId") && !body.value("nextCyclePlanId", "").empty()) {
+            if (body.contains("nextCyclePlanId")) {
                 service_.requestNextCyclePlanChange(sess.userId, body.value("nextCyclePlanId", ""));
             }
             if (body.contains("choice")) {
@@ -636,6 +636,9 @@ void ApiServer::registerRoutes() {
                 sj["planId"] = stu.subscription().planId();
                 sj["endDate"] = stu.subscription().endDate().toString();
                 sj["settlementChoice"] = toString(stu.subscription().settlementChoice());
+                sj["nextCyclePlanId"] = stu.subscription().nextCyclePlanId();
+                const auto* nPlan = service_.getPlanById(stu.subscription().nextCyclePlanId());
+                sj["nextCyclePlanName"] = nPlan ? nPlan->displayName() : stu.subscription().nextCyclePlanId();
                 sj["balancePaise"] = stu.wallet().balance().paise();
                 sj["balanceFormatted"] = stu.wallet().balance().toRupeeString();
                 sj["carryForwardPaise"] = stu.subscription().carryForwardCreditApplied().paise();
@@ -680,6 +683,9 @@ void ApiServer::registerRoutes() {
                 sj["amountPaise"] = s.settledAmount.paise();
                 sj["amountFormatted"] = s.settledAmount.toRupeeString();
                 sj["payoutId"] = s.payoutId;
+                sj["nextPlanId"] = s.nextPlanId;
+                const auto* nPlan = service_.getPlanById(s.nextPlanId);
+                sj["nextPlanName"] = nPlan ? nPlan->displayName() : s.nextPlanId;
                 sj["settledAtIst"] = TimeUtils::formatIstPretty(s.settledAtUtc);
                 setArr.push_back(sj);
             }
@@ -804,21 +810,43 @@ void ApiServer::registerRoutes() {
             auto results = service_.runMonthlySettlement(ym, sess.username);
 
             json arr = json::array();
+            std::ostringstream summaryMsg;
+            summaryMsg << "Processed month-end settlement for " << results.size() << " student(s)";
+            if (!results.empty()) {
+                summaryMsg << ": ";
+            }
+            bool first = true;
             for (const auto& s : results) {
                 json sj = json::object();
                 sj["id"] = s.id;
                 sj["studentId"] = s.studentId;
+                std::string sName = s.studentId;
+                try {
+                    sName = service_.getStudentById(s.studentId).fullName();
+                } catch (...) {}
+                sj["studentName"] = sName;
                 sj["yearMonth"] = s.yearMonth;
                 sj["choice"] = toString(s.choice);
                 sj["settledFormatted"] = s.settledAmount.toRupeeString();
                 sj["payoutId"] = s.payoutId;
+                sj["nextPlanId"] = s.nextPlanId;
+                const auto* nPlan = service_.getPlanById(s.nextPlanId);
+                sj["nextPlanName"] = nPlan ? nPlan->displayName() : s.nextPlanId;
                 arr.push_back(sj);
+
+                if (!first) summaryMsg << ", ";
+                first = false;
+                summaryMsg << sName << " (" << toString(s.choice) << " " << s.settledAmount.toRupeeString()
+                           << " -> Next Plan: " << (nPlan ? nPlan->displayName() : s.nextPlanId) << ")";
+            }
+            if (results.empty()) {
+                summaryMsg.str("No students with positive balance required settlement.");
             }
             json out = json::object();
             out["ok"] = true;
             out["settledCount"] = static_cast<int>(results.size());
             out["settlements"] = arr;
-            out["message"] = "Processed month-end settlement for " + std::to_string(results.size()) + " student(s) with positive balance.";
+            out["message"] = summaryMsg.str();
             sendJson(res, 200, out);
         } catch (const MealWalletException& ex) {
             sendError(res, 400, ex.what(), ex.ruleName());

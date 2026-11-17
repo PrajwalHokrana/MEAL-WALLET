@@ -83,7 +83,11 @@
         const res = await fetch('/api/admin/skips?status=pending', {
           headers: { 'X-Session-Token': token }
         });
-        if (res.status === 401) { window.location.href = '/'; return; }
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem('mw_token');
+          window.location.href = '/';
+          return;
+        }
         const data = await res.json();
         if (!data.ok) return;
 

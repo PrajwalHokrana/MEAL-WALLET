@@ -1,2 +1,8 @@
 #MEALWALLET_V1|notifications
 NTF-0001|USR-0003|Welcome to Meal Wallet|Your Standard Veg Plan is active. Approved missed meals credit 80% to your wallet.|0|1794905939
+NTF-0002|USR-0004|Account Created|Assigned Standard Veg Plan (2026-11-01 to 2026-11-30).|0|1794921863
+NTF-0003|USR-0004|Skip Request Rejected|Your skip for DINNER on 2026-11-17 was rejected. Reason: Rejected: Counter attendance log shows meal was consumed at counter. (You may appeal once).|0|1794904200
+NTF-0004|USR-0004|Skip Approved & Credited (Rs. 44.00)|Your skip for DINNER on 2026-11-17 was approved. Credited Rs. 44.00 to your wallet.|0|1794904200
+NTF-0005|USR-0004|Next-Cycle Plan Queued|Your plan change to Protein Non-Veg Plan will take effect from the next cycle (after 2026-11-30).|0|1794904200
+NTF-0006|USR-0004|Month-End Settlement (2026-11)|Month-end REFUND processed for Rs. 44.00 (Payout ID: PAY-0001). Admin will mark paid offline.|0|1794904200
+NTF-0007|USR-0004|Refund Payout Completed (Rs. 44.00)|Payout PAY-0001 marked paid offline: Paid offline via UPI by Admin|0|1794904200

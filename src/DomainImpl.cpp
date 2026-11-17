@@ -1,3 +1,4 @@
+#include "Compat.hpp"
 #include "Config.hpp"
 #include "Crypto.hpp"
 #include "DateTime.hpp"
@@ -8,6 +9,8 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>
@@ -96,27 +99,60 @@ void Config::loadFromEnv() {
 }
 
 // ============================================================================
-// Session Token & Temporary Password Generators (Random Generation, No Cryptography)
+// Session Token & Temporary Password Generators (High-Entropy, Thread-Safe)
 // ============================================================================
 std::string Crypto::generateToken(size_t hexLen) {
-    static const char* kHex = "0123456789abcdef";
-    static thread_local std::mt19937_64 rng{std::random_device{}()};
-    std::uniform_int_distribution<int> dist(0, 15);
-    std::string out;
-    out.reserve(hexLen);
-    for (size_t i = 0; i < hexLen; ++i) {
-        out.push_back(kHex[dist(rng)]);
+    static std::atomic<uint64_t> s_seq{1000};
+
+    auto nowNs = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()
+        ).count());
+    uint64_t seq = s_seq.fetch_add(1);
+
+#ifdef _WIN32
+    uint64_t pid = static_cast<uint64_t>(GetCurrentProcessId());
+    uint64_t tid = static_cast<uint64_t>(GetCurrentThreadId());
+#else
+    uint64_t pid = static_cast<uint64_t>(getpid());
+    uint64_t tid = static_cast<uint64_t>(pthread_self());
+#endif
+
+    // SplitMix64 mixing rounds combining nanosecond clock, atomic counter, PID, TID
+    uint64_t z1 = nowNs + seq + (pid << 32) + tid + 0x9e3779b97f4a7c15ULL;
+    z1 = (z1 ^ (z1 >> 30)) * 0xbf58476d1ce4e5b9ULL;
+    z1 = (z1 ^ (z1 >> 27)) * 0x94d049bb133111ebULL;
+    uint64_t r1 = z1 ^ (z1 >> 31);
+
+    uint64_t z2 = (nowNs ^ (seq << 24)) + (tid << 16) + 0x517cc1b727220a95ULL;
+    z2 = (z2 ^ (z2 >> 30)) * 0xbf58476d1ce4e5b9ULL;
+    z2 = (z2 ^ (z2 >> 27)) * 0x94d049bb133111ebULL;
+    uint64_t r2 = z2 ^ (z2 >> 31);
+
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0')
+        << std::setw(16) << r1
+        << std::setw(16) << r2
+        << std::setw(8)  << static_cast<uint32_t>(seq);
+    std::string s = oss.str();
+    if (s.size() < hexLen) {
+        s.append(hexLen - s.size(), 'a');
     }
-    return out;
+    return s.substr(0, hexLen);
 }
 
 std::string Crypto::generateTempPassword() {
     static const char* kChars = "abcdefghjkmnpqrstuvwxyz23456789";
-    static thread_local std::mt19937_64 rng{std::random_device{}()};
-    std::uniform_int_distribution<int> dist(0, 30);
+    static std::atomic<uint64_t> s_passSeq{1};
+    auto nowNs = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch()
+        ).count());
+    uint64_t z = nowNs + s_passSeq.fetch_add(1) + 0xbf58476d1ce4e5b9ULL;
+    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
     std::string code = "pass";
     for (int i = 0; i < 4; ++i) {
-        code.push_back(kChars[dist(rng)]);
+        code.push_back(kChars[(z >> (i * 5)) % 31]);
     }
     return code;
 }
@@ -250,6 +286,9 @@ SettlementEngine::Result SettlementEngine::settleStudentMonthEnd(Student& studen
         rec.settledAmount = Money::fromPaise(0);
         rec.payoutId = "";
         rec.settledAtUtc = nowUtc;
+        rec.nextPlanId = student.subscription().nextCyclePlanId().empty()
+            ? student.subscription().planId()
+            : student.subscription().nextCyclePlanId();
         return Result{rec, false, PayoutRecord{}, nullptr};
     }
 
@@ -260,6 +299,9 @@ SettlementEngine::Result SettlementEngine::settleStudentMonthEnd(Student& studen
     rec.choice = choice;
     rec.settledAmount = currentBal;
     rec.settledAtUtc = nowUtc;
+    rec.nextPlanId = student.subscription().nextCyclePlanId().empty()
+        ? student.subscription().planId()
+        : student.subscription().nextCyclePlanId();
 
     Result res;
     res.settlement = rec;

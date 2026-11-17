@@ -36,6 +36,7 @@ struct SettlementRecord {
     Money settledAmount;
     std::string payoutId; // Non-empty if choice == REFUND
     int64_t settledAtUtc = 0;
+    std::string nextPlanId; // Plan selected / rolled into for the next cycle
 };
 
 struct PayoutRecord {

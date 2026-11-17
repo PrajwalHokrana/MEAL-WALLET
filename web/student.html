@@ -89,10 +89,9 @@
           <select id="skipModeSelect">
             <option value="SINGLE">Single Meal Skip (Future Date)</option>
             <option value="MULTI">Multi-Day Leave (Expands to Individual Slots)</option>
-            <option value="SWAP">One-Day Meal Upgrade Swap</option>
           </select>
 
-          <div id="singleOrSwapFields">
+          <div id="singleDateFields">
             <label for="singleDateInput">Meal Date</label>
             <input type="date" id="singleDateInput" required />
             <label for="singleMealSelect">Meal Slot</label>
@@ -126,14 +125,6 @@
                 <input type="checkbox" class="multi-meal-cb" value="DINNER" checked style="width: auto; margin: 0;" /> Dinner
               </label>
             </div>
-          </div>
-
-          <div id="swapPlanField" style="display: none;">
-            <label for="swapTargetPlan">Upgrade Target Plan</label>
-            <select id="swapTargetPlan">
-              <option value="PLAN-NONVEG">Protein Non-Veg Plan</option>
-              <option value="PLAN-PREMIUM">Executive Premium Plan</option>
-            </select>
           </div>
 
           <label for="skipReasonInput">Reason</label>
@@ -315,9 +306,8 @@
     const skipModeSelect = document.getElementById('skipModeSelect');
     skipModeSelect.addEventListener('change', () => {
       const mode = skipModeSelect.value;
-      document.getElementById('singleOrSwapFields').style.display = (mode === 'MULTI') ? 'none' : 'block';
-      document.getElementById('multiRangeFields').style.display   = (mode === 'MULTI') ? 'block' : 'none';
-      document.getElementById('swapPlanField').style.display      = (mode === 'SWAP')  ? 'block' : 'none';
+      document.getElementById('singleDateFields').style.display = (mode === 'MULTI') ? 'none' : 'block';
+      document.getElementById('multiRangeFields').style.display = (mode === 'MULTI') ? 'block' : 'none';
     });
 
     function formatDuration(sec) {
@@ -393,11 +383,18 @@
           fetch('/api/student/wallet',    { headers: { 'X-Session-Token': token } }),
           fetch('/api/student/inbox',     { headers: { 'X-Session-Token': token } })
         ]);
-        if (dashRes.status === 401) { window.location.href = '/'; return; }
+        if (dashRes.status === 401 || dashRes.status === 403) {
+          localStorage.removeItem('mw_token');
+          window.location.href = '/';
+          return;
+        }
         const dash = await dashRes.json();
         const wal  = await walRes.json();
         const inb  = await inbRes.json();
-        if (!dash.ok) return;
+        if (!dash.ok) {
+          showBanner('studentAlertError', dash.error || 'Failed to load dashboard.');
+          return;
+        }
 
         document.getElementById('pollStatusText').textContent = 'Updated just now';
         document.getElementById('liveServerClockLabel').textContent = dash.clock.nowIstPretty;
@@ -579,7 +576,6 @@
       } else {
         payload.mealDate = document.getElementById('singleDateInput').value;
         payload.mealType = document.getElementById('singleMealSelect').value;
-        if (mode === 'SWAP') payload.targetPlanId = document.getElementById('swapTargetPlan').value;
       }
       try {
         const res = await fetch('/api/student/skips', {

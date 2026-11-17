@@ -2,3 +2,4 @@
 USR-0001|ADMIN|admin|Admin (Chief Warden)|Chief Mess Warden|admin123|0
 USR-0002|MESS_STAFF|messstaff|Mess Counter Staff|ALL_MEALS|staff123|0
 USR-0003|STUDENT|bt25cse147|Prajwal Hokrana|A-514|student123|0
+USR-0004|STUDENT|bt25cse145|Aakrash|A-517|Aaka2129|0
